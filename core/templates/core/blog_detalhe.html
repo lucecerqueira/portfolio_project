@@ -1,0 +1,14 @@
+{% extends 'core/base.html' %}
+{% block title %}{{ post.titulo }} | Blog{% endblock %}
+{% block content %}
+<div class="card" style="padding: 32px;">
+  <h1 style="color: var(--accent); margin-bottom: 10px; font-size: 1.8rem;">{{ post.titulo }}</h1>
+  <span style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 24px; display: block;">Publicado em {{ post.data_publicacao|date:"d/m/Y H:i" }}</span>
+  <div style="line-height: 1.7; color: var(--text-primary); font-size: 1rem;">
+    <p>{{ post.conteudo|linebreaks }}</p>
+  </div>
+  <div style="margin-top: 30px; border-top: 1px solid var(--border-clay); padding-top: 20px;">
+    <a href="{% url 'blog_lista' %}" style="color: var(--accent); text-decoration: none; font-weight: 600;">&larr; Voltar para a listagem do Blog</a>
+  </div>
+</div>
+{% endblock %}

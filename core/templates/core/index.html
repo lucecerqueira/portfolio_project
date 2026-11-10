@@ -1,0 +1,164 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% block title %}Lucenildo Silva Cerqueira, DSc. | Início{% endblock %}
+{% block content %}
+<div class="hero">
+  <div>
+    <h1>Lucenildo Silva Cerqueira, DSc.</h1>
+    <div class="subtitle">Cientista de Dados | Doutor em Engenharia Biomédica</div>
+    <p>
+      Doutor em Engenharia Biomédica pelo PEB/COPPE/UFRJ com pós-doutorados em Processamento de Sinais Biológicos e Modelagem de Sistemas Biológicos pela UFRJ. Atua como Cientista de Dados e Epidemiologista no Instituto Nacional de Câncer (INCA). Ex-Professor Substituto no Instituto de Computação da UFRJ (2024–2025). Premiado com o Prêmio SBEB-Boston Scientific de Inovação em Engenharia Biomédica para o SUS (2024).
+    </p>
+    <div class="social-links">
+      <a class="btn-link" href="https://www.linkedin.com/in/lucenildo-cerqueira-2534b228/" target="_blank">LinkedIn</a>
+      <a class="btn-link" href="https://scholar.google.com/citations?user=sbiFXRIAAAAJ&hl=pt-BR" target="_blank">Google Scholar</a>
+      <a class="btn-link" href="https://github.com/lucecerqueira" target="_blank">GitHub</a>
+      <a class="btn-link" href="https://publons.com/wos-op/researcher/2495914/lucenildo-s-cerqueira/" target="_blank">Web of Science</a>
+    </div>
+  </div>
+
+  <div class="hero-visual">
+    <div id="vcg-hero-container" style="width: 100%; height: 280px; border-radius: 14px; overflow: hidden; background-color: #f1f5f9; border: 1.5px solid #cbd5e1; position: relative;">
+      <span style="position: absolute; top: 10px; left: 12px; font-size: 0.75rem; color: #2b6cb0; font-family: monospace; font-weight: 700; z-index: 5; pointer-events: none;">
+        ● VCG 3D TEMPO REAL (Gire com o mouse)
+      </span>
+    </div>
+    <figcaption style="margin-top: 10px; font-size: 0.82rem; color: var(--text-secondary); font-weight: 600;">
+      Reconstrução espacial tridimensional do Vetorcardiograma (Frank X, Y, Z) gerada interativamente via WebGL.
+    </figcaption>
+  </div>
+</div>
+
+<section>
+  <div class="section-header">
+    <h2>Prêmios, Títulos e Reconhecimentos</h2>
+  </div>
+  <div class="pillars-grid">
+    <div class="card">
+      <h3>Prêmio SBEB-Boston Scientific (2024)</h3>
+      <p>Prêmio de Inovação em Engenharia Biomédica para o SUS concedido pela Sociedade Brasileira de Engenharia Biomédica e Boston Scientific.</p>
+    </div>
+    <div class="card">
+      <h3>Aprovação Concurso FIOCRUZ (2024)</h3>
+      <p>Aprovado em 6º lugar geral (3º lugar em vagas reservadas a pessoas negras) para o cargo de Pesquisador PE62 – Cientista de Dados no Instituto Fernandes Figueira (Edital 03/2023).</p>
+    </div>
+    <div class="card">
+      <h3>Cientista de Dados no INCA (2026 – Atual)</h3>
+      <p>Desenvolvimento e análise analítica no projeto estratégico de vigilância e panorama da assistência oncológica no SUS.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="section-header">
+    <h2>Formação Acadêmica e Pós-Doutorado</h2>
+  </div>
+  <div class="academic-timeline">
+    <div class="timeline-item">
+      <h4>Pós-Doutorado em Engenharia Biomédica</h4>
+      <span>Universidade Federal do Rio de Janeiro — UFRJ (2020 – 2022 / Bolsista CAPES | 2016 – 2017 / Bolsista CNPq)</span>
+      <p>Pesquisa com ênfase em Processamento de Sinais Biológicos, Regulação Autonômica, Modelagem de Sistemas e Controle Cardiolocomotor.</p>
+    </div>
+    <div class="timeline-item">
+      <h4>Doutorado em Engenharia Biomédica</h4>
+      <span>COPPE / UFRJ (2011 – 2016 | Bolsista CNPq)</span>
+      <p><strong>Tese:</strong> Evidências Contra a Coordenação Cardiolocomotora Durante a Corrida: uma Abordagem por Comparação Cruzada.<br>Orientadores: Prof. Jurandir Nadal e Prof. Roger Gomes Tavares de Mello.</p>
+    </div>
+    <div class="timeline-item">
+      <h4>Mestrado em Educação Física (Biodinâmica do Movimento)</h4>
+      <span>Universidade Federal do Rio de Janeiro — UFRJ (2009 – 2011 | Bolsista CAPES)</span>
+      <p><strong>Dissertação:</strong> Efeito da Ingestão de Carboidrato e Cafeína na Atividade Mioelétrica e na Fadiga do Bíceps Braquial.<br>Orientador: Prof. Fernando Pompeu.</p>
+    </div>
+    <div class="timeline-item">
+      <h4>Especialização em Ciências da Performance Humana</h4>
+      <span>Universidade Federal do Rio de Janeiro — UFRJ (2008 – 2009 | 360h)</span>
+      <p>Pesquisa voltada à cinética do consumo de oxigênio (VO2) e substratos energéticos em testes de esforço.</p>
+    </div>
+    <div class="timeline-item">
+      <h4>Graduação em Educação Física (Licenciatura Plena)</h4>
+      <span>Universidade Federal do Rio de Janeiro — UFRJ (2004 – 2008)</span>
+      <p>Trabalho com foco na interação de carboidratos e cafeína na cinética respiratória e oxidação de gorduras.</p>
+    </div>
+  </div>
+</section>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+  (function() {
+    const container = document.getElementById('vcg-hero-container');
+    if (!container) return;
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xf1f5f9);
+
+    const camera = new THREE.PerspectiveCamera(40, container.clientWidth / container.clientHeight, 0.1, 1000);
+    camera.position.set(24, 18, 36);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    container.appendChild(renderer.domElement);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+
+    const grid = new THREE.GridHelper(36, 12, 0x94a3b8, 0xcbd5e1);
+    scene.add(grid);
+
+    const points = [];
+    const N = 600;
+    for (let i = 0; i <= N; i++) {
+      const t = (i / N) * Math.PI * 2;
+      const x = 11 * Math.sin(t) * Math.cos(t * 0.5) + 2.5 * Math.sin(2 * t);
+      const y = 15 * Math.cos(t) * Math.sin(t) + 3 * Math.cos(3 * t);
+      const z = 8 * Math.sin(t) * Math.sin(2 * t);
+      points.push(new THREE.Vector3(x, y + 5, z));
+    }
+
+    const curve = new THREE.CatmullRomCurve3(points);
+    const geometry = new THREE.TubeGeometry(curve, 220, 0.38, 8, true);
+
+    const count = geometry.attributes.position.count;
+    geometry.setAttribute('color', new THREE.BufferAttribute(new Float32Array(count * 3), 3));
+    const colors = geometry.attributes.color;
+    for (let i = 0; i < count; i++) {
+      const c = new THREE.Color();
+      c.setHSL(0.55 + (i / count) * 0.35, 0.95, 0.45);
+      colors.setXYZ(i, c.r, c.g, c.b);
+    }
+
+    const material = new THREE.MeshBasicMaterial({ vertexColors: true });
+    const mesh = new THREE.Mesh(geometry, material);
+    scene.add(mesh);
+
+    const pulseGeo = new THREE.SphereGeometry(0.7, 12, 12);
+    const pulseMat = new THREE.MeshBasicMaterial({ color: 0x0969da });
+    const pulse = new THREE.Mesh(pulseGeo, pulseMat);
+    scene.add(pulse);
+
+    let progress = 0;
+    function animate() {
+      requestAnimationFrame(animate);
+      mesh.rotation.y += 0.007;
+
+      progress = (progress + 0.005) % 1;
+      const pt = curve.getPoint(progress);
+      pt.applyAxisAngle(new THREE.Vector3(0, 1, 0), mesh.rotation.y);
+      pulse.position.copy(pt);
+
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    window.addEventListener('resize', () => {
+      if (!container) return;
+      camera.aspect = container.clientWidth / container.clientHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(container.clientWidth, container.clientHeight);
+    });
+  })();
+</script>
+{% endblock %}

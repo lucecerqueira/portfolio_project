@@ -1,0 +1,158 @@
+{% extends 'core/base.html' %}
+{% block title %}Laboratório 3D: Vetorcardiograma | Lucenildo Silva Cerqueira, DSc.{% endblock %}
+{% block content %}
+<div class="section-header" style="margin-bottom: 24px;">
+  <h2>Laboratório Interativo: Vetorcardiograma 3D (WebGL / Three.js)</h2>
+  <p>Renderização tridimensional em tempo real das alças espaciais de ativação ventricular e atrial através de derivações ortogonais Frank (X, Y, Z).</p>
+</div>
+
+<div style="display: grid; grid-template-columns: 2.2fr 1fr; gap: 24px; align-items: start;">
+  <div style="background-color: var(--surface); border: 1px solid var(--border-clay); border-radius: 18px; padding: 18px; box-shadow: var(--clay-shadow);">
+    <div id="vcg-canvas-container" style="width: 100%; height: 500px; border-radius: 12px; overflow: hidden; background-color: #0b0e14; position: relative;">
+      <div style="position: absolute; top: 12px; left: 16px; font-size: 0.8rem; color: var(--text-secondary); pointer-events: none; z-index: 10;">
+        Eixos Ortogonais: <span style="color: #f85149; font-weight: bold;">X (Transversal)</span> | <span style="color: #3fb950; font-weight: bold;">Y (Vertical)</span> | <span style="color: #58a6ff; font-weight: bold;">Z (Anteroposterior)</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="background-color: var(--surface); border: 1px solid var(--border-clay); border-radius: 18px; padding: 24px; box-shadow: var(--clay-shadow); display: flex; flex-direction: column; gap: 18px;">
+    <h3 style="color: var(--accent); font-size: 1.15rem;">Controles Interativos</h3>
+    <p style="font-size: 0.88rem; color: var(--text-secondary);">Use o mouse ou touch para rotacionar a alça tridimensional, arrastar para transladar e scroll para aproximar.</p>
+
+    <div>
+      <label style="font-size: 0.85rem; color: var(--text-primary); font-weight: 600; display: block; margin-bottom: 6px;">Visualização dos Planos Ortogonais:</label>
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <button id="btn-free" class="btn-link" style="width: 100%; text-align: center; border: none; cursor: pointer;">Órbita Livre 3D</button>
+        <button id="btn-frontal" class="btn-link" style="width: 100%; text-align: center; border: none; cursor: pointer;">Plano Frontal (X-Y)</button>
+        <button id="btn-sagital" class="btn-link" style="width: 100%; text-align: center; border: none; cursor: pointer;">Plano Sagital (Y-Z)</button>
+        <button id="btn-horizontal" class="btn-link" style="width: 100%; text-align: center; border: none; cursor: pointer;">Plano Horizontal (X-Z)</button>
+      </div>
+    </div>
+
+    <div>
+      <label style="font-size: 0.85rem; color: var(--text-primary); font-weight: 600; display: block; margin-bottom: 6px;">Velocidade de Rotação Automática:</label>
+      <input type="range" id="speed-slider" min="0" max="0.03" step="0.002" value="0.008" style="width: 100%;">
+    </div>
+
+    <div style="padding-top: 10px; border-top: 1px solid var(--border-clay); font-size: 0.82rem; color: var(--text-secondary);">
+      Tecnologia: WebGL, Three.js e parametrização vetorial de laços QRS/T sintetizados conforme modelos biofísicos.
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+<script>
+  const container = document.getElementById('vcg-canvas-container');
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x0b0e14);
+
+  const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+  camera.position.set(30, 25, 45);
+
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(container.clientWidth, container.clientHeight);
+  renderer.setPixelRatio(window.devicePixelRatio);
+  container.appendChild(renderer.domElement);
+
+  const controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.05;
+
+  // Grid e eixos de referência
+  const gridHelper = new THREE.GridHelper(50, 20, 0x58a6ff, 0x1e2530);
+  scene.add(gridHelper);
+
+  const axesHelper = new THREE.AxesHelper(15);
+  scene.add(axesHelper);
+
+  // Geração paramétrica da alça QRS e T no espaço tridimensional
+  const points = [];
+  const numPoints = 800;
+  for (let i = 0; i <= numPoints; i++) {
+    const t = (i / numPoints) * Math.PI * 2;
+    // Modelagem matemática dos loops espacializados de despolarização e repolarização ventricular
+    const x = 16 * Math.sin(t) * Math.cos(t * 0.5) + 3 * Math.sin(2 * t);
+    const y = 22 * Math.cos(t) * Math.sin(t) + 4 * Math.cos(3 * t);
+    const z = 12 * Math.sin(t) * Math.sin(2 * t);
+    points.push(new THREE.Vector3(x, y + 8, z));
+  }
+
+  const curve = new THREE.CatmullRomCurve3(points);
+  const tubeGeometry = new THREE.TubeGeometry(curve, 300, 0.45, 10, true);
+
+  // Gradiente dinâmico de cores para a trajetória vetorial
+  const count = tubeGeometry.attributes.position.count;
+  tubeGeometry.setAttribute('color', new THREE.BufferAttribute(new Float32Array(count * 3), 3));
+  const colors = tubeGeometry.attributes.color;
+
+  for (let i = 0; i < count; i++) {
+    const ratio = i / count;
+    const color = new THREE.Color();
+    color.setHSL(0.55 + ratio * 0.35, 0.9, 0.6);
+    colors.setXYZ(i, color.r, color.g, color.b);
+  }
+
+  const material = new THREE.MeshBasicMaterial({ vertexColors: true, wireframe: false });
+  const vcgMesh = new THREE.Mesh(tubeGeometry, material);
+  scene.add(vcgMesh);
+
+  // Ponto dinâmico que percorre a alça (simulação de propagação do vetor cardíaco instantâneo)
+  const sphereGeo = new THREE.SphereGeometry(0.9, 16, 16);
+  const sphereMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+  const tracer = new THREE.Mesh(sphereGeo, sphereMat);
+  scene.add(tracer);
+
+  let progress = 0;
+  let autoRotateSpeed = 0.008;
+
+  const slider = document.getElementById('speed-slider');
+  slider.addEventListener('input', (e) => {
+    autoRotateSpeed = parseFloat(e.target.value);
+  });
+
+  document.getElementById('btn-free').addEventListener('click', () => {
+    camera.position.set(30, 25, 45);
+    camera.lookAt(0, 8, 0);
+  });
+  document.getElementById('btn-frontal').addEventListener('click', () => {
+    camera.position.set(0, 8, 55);
+    camera.lookAt(0, 8, 0);
+  });
+  document.getElementById('btn-sagital').addEventListener('click', () => {
+    camera.position.set(55, 8, 0);
+    camera.lookAt(0, 8, 0);
+  });
+  document.getElementById('btn-horizontal').addEventListener('click', () => {
+    camera.position.set(0, 60, 0.01);
+    camera.lookAt(0, 8, 0);
+  });
+
+  function animate() {
+    requestAnimationFrame(animate);
+    
+    // Rotação sutil da alça
+    if (autoRotateSpeed > 0) {
+      vcgMesh.rotation.y += autoRotateSpeed;
+    }
+
+    // Movimentação do vetor elétrico instantâneo
+    progress = (progress + 0.004) % 1;
+    const pt = curve.getPoint(progress);
+    pt.applyAxisAngle(new THREE.Vector3(0, 1, 0), vcgMesh.rotation.y);
+    tracer.position.copy(pt);
+
+    controls.update();
+    renderer.render(scene, camera);
+  }
+
+  animate();
+
+  window.addEventListener('resize', () => {
+    camera.aspect = container.clientWidth / container.clientHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(container.clientWidth, container.clientHeight);
+  });
+</script>
+{% endblock %}

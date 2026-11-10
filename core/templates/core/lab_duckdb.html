@@ -1,0 +1,797 @@
+{% extends 'core/base.html' %}
+{% block title %}PLN Biomédico & BioPython PubMed | Lucenildo Silva Cerqueira, DSc.{% endblock %}
+{% block content %}
+<div class="section-header" style="margin-bottom: 22px;">
+  <h2>Mineração Biomédica & Redes Semânticas 3D (BioPython / PubMed)</h2>
+  <p>Extração automática de metadados via Entrez API, projeção semântica com arestas uni e bidirecionais por similaridade de cossenos e grafo de coautoria.</p>
+</div>
+
+<!-- CONTAINER PRINCIPAL PLATINUM -->
+<div style="background: linear-gradient(180deg, #e4e7eb 0%, #d1d6dc 100%); border: 3px solid #b8bfc8; border-radius: 18px; padding: 22px; box-shadow: 10px 14px 28px rgba(0,0,0,0.18), inset 2px 2px 3px #fff; color: #1a202c;">
+
+  <!-- BARRA DE PESQUISA -->
+  <div style="background-color: #f0f3f6; border: 1.5px solid #b8bfc8; border-radius: 14px; padding: 16px 20px; margin-bottom: 20px; box-shadow: inset 1px 1px 2px #fff;">
+    <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 12px; flex-wrap: wrap;">
+      <input type="text" id="pubmed-query-input" value="{{ query }}" placeholder="Pesquise termos biomédicos (ex.: vectorcardiography, cardiotoxicity, heart rate variability)..." style="flex: 1; min-width: 280px; padding: 11px 16px; border: 1.5px solid #cbd5e0; border-radius: 8px; font-size: 0.92rem; font-weight: 600; color: #1a202c; outline: none; background: #fff;">
+      
+      <select id="pubmed-limit" style="padding: 10px 14px; border: 1.5px solid #cbd5e0; border-radius: 8px; font-size: 0.85rem; font-weight: 700; color: #2d3748; background: #fff;">
+        <option value="40" selected>40 papers</option>
+        <option value="100">100 papers</option>
+        <option value="250">250 papers</option>
+        <option value="500">500 papers</option>
+      </select>
+
+      <button id="btn-search-pubmed" class="action-btn" style="background: #2b6cb0; color: #fff; border: 1px solid #1e4e80; padding: 10px 20px; font-size: 0.88rem; cursor: pointer;">Buscar e Processar</button>
+    </div>
+
+    <!-- PRESETS DIRETOS DO PUBMED -->
+    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 0.78rem;">
+      <span style="font-weight: 800; color: #4a5568; text-transform: uppercase;">Termos de Referência:</span>
+      <button class="preset-badge" data-query="vectorcardiography myocardial infarction">VCG e Enfarte Agudo</button>
+      <button class="preset-badge" data-query="anthracycline cardiotoxicity monitoring">Cardiotoxicidade e Antraciclinas</button>
+      <button class="preset-badge" data-query="phase-rectified signal averaging heart rate">Regulação Autonômica e PRSA</button>
+      <button class="preset-badge" data-query="cardiolocomotor coupling running">Acoplamento Cardiolocomotor</button>
+    </div>
+  </div>
+
+  <!-- SCORECARDS ANALÍTICOS -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; margin-bottom: 20px;">
+    <div style="background-color: #ffffff; border: 1.5px solid #b8bfc8; border-radius: 12px; padding: 16px; box-shadow: 2px 3px 6px rgba(0,0,0,0.06);">
+      <div style="font-size: 0.75rem; color: #4a5568; font-weight: 700; text-transform: uppercase;">Artigos Analisados</div>
+      <div id="stat-total" style="font-size: 1.6rem; font-weight: 800; color: #2b6cb0; margin-top: 4px;">--</div>
+    </div>
+    <div style="background-color: #ffffff; border: 1.5px solid #b8bfc8; border-radius: 12px; padding: 16px; box-shadow: 2px 3px 6px rgba(0,0,0,0.06);">
+      <div style="font-size: 0.75rem; color: #4a5568; font-weight: 700; text-transform: uppercase;">Autores na Rede</div>
+      <div id="stat-authors" style="font-size: 1.6rem; font-weight: 800; color: #276749; margin-top: 4px;">--</div>
+    </div>
+    <div style="background-color: #ffffff; border: 1.5px solid #b8bfc8; border-radius: 12px; padding: 16px; box-shadow: 2px 3px 6px rgba(0,0,0,0.06);">
+      <div style="font-size: 0.75rem; color: #4a5568; font-weight: 700; text-transform: uppercase;">Conexões de Cosseno</div>
+      <div id="stat-links" style="font-size: 1.6rem; font-weight: 800; color: #b7791f; margin-top: 4px;">--</div>
+    </div>
+  </div>
+
+  <!-- DUPLO PAINEL 3D COM TOOLTIPS ARRASTÁVEIS E AUTO-FLIP -->
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 24px;">
+
+    <!-- 1. MAPA SEMÂNTICO 3D -->
+    <div style="background-color: #ffffff; border: 2px solid #a0aec0; border-radius: 14px; padding: 14px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); display: flex; flex-direction: column;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <span style="font-size: 0.82rem; font-weight: 800; color: #2b6cb0;">MAPA SEMÂNTICO 3D (PLN RESUMOS)</span>
+        <div style="font-size: 0.7rem; font-weight: 700; color: #4a5568;">
+          <span style="color: #276749;">━ Mútua</span> | <span style="color: #c53030;">➔ Derivação</span>
+        </div>
+      </div>
+
+      <div id="knowledge-3d-container" style="width: 100%; height: 400px; border-radius: 8px; background-color: #f8fafc; border: 1.5px solid #cbd5e0; position: relative; overflow: hidden;">
+        
+        <!-- CARD INTELIGENTE FLUTUANTE / ARRASTÁVEL 1 -->
+        <div id="hover-tooltip-3d" class="smart-window" style="border-top: 4px solid #2b6cb0;">
+          <div class="window-header">
+            <span class="window-badge" style="background: rgba(43,108,176,0.12); color: #2b6cb0;">ARTIGO CIENTÍFICO</span>
+            <div style="display: flex; gap: 4px; align-items: center;">
+              <span id="pin-indicator-1" style="font-size: 0.68rem; color: #718096; font-weight: 700;">[Clique: Fixar]</span>
+              <button class="btn-close-window" id="close-tt-1">✕</button>
+            </div>
+          </div>
+          <div class="window-body">
+            <div id="tooltip-title" style="font-weight: 800; color: #1a202c; font-size: 0.82rem; margin-bottom: 4px; line-height: 1.3;"></div>
+            <div id="tooltip-authors" style="font-weight: 700; color: #276749; font-size: 0.74rem; margin-bottom: 3px;"></div>
+            <div id="tooltip-journal" style="font-style: italic; color: #718096; font-size: 0.71rem; margin-bottom: 5px;"></div>
+            <div id="tooltip-relations" style="font-weight: 700; color: #b7791f; font-size: 0.72rem; margin-bottom: 6px; padding: 4px 6px; background: #fff9db; border-radius: 4px;"></div>
+            <div id="tooltip-snippet" style="color: #4a5568; line-height: 1.35; font-size: 0.73rem; max-height: 110px; overflow-y: auto;"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- 2. GRAFO 3D DE AUTORES -->
+    <div style="background-color: #ffffff; border: 2px solid #a0aec0; border-radius: 14px; padding: 14px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); display: flex; flex-direction: column;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <span style="font-size: 0.82rem; font-weight: 800; color: #276749;">REDE 3D DE AUTORES (COAUTORIA E COSSENO)</span>
+        <div style="font-size: 0.7rem; font-weight: 700; color: #4a5568;">
+          <span style="color: #276749;">━ Coautoria</span> | <span style="color: #c53030;">➔ Liderança</span>
+        </div>
+      </div>
+
+      <div id="network-3d-container" style="width: 100%; height: 400px; border-radius: 8px; background-color: #f8fafc; border: 1.5px solid #cbd5e0; position: relative; overflow: hidden;">
+        
+        <!-- CARD INTELIGENTE FLUTUANTE / ARRASTÁVEL 2 -->
+        <div id="hover-tooltip-net" class="smart-window" style="border-top: 4px solid #276749;">
+          <div class="window-header">
+            <span class="window-badge" style="background: rgba(39,103,73,0.12); color: #276749;">PERFIL DO INVESTIGADOR</span>
+            <div style="display: flex; gap: 4px; align-items: center;">
+              <span id="pin-indicator-2" style="font-size: 0.68rem; color: #718096; font-weight: 700;">[Clique: Fixar]</span>
+              <button class="btn-close-window" id="close-tt-2">✕</button>
+            </div>
+          </div>
+          <div class="window-body">
+            <div id="net-tt-name" style="font-weight: 800; color: #1a202c; font-size: 0.86rem; margin-bottom: 3px;"></div>
+            <div id="net-tt-inst" style="font-weight: 600; color: #4a5568; font-size: 0.74rem; margin-bottom: 4px;"></div>
+            <div id="net-tt-papers" style="color: #2b6cb0; font-weight: 700; font-size: 0.74rem; margin-bottom: 6px;"></div>
+            <div id="net-tt-relations" style="color: #2d3748; line-height: 1.35; font-size: 0.73rem; max-height: 120px; overflow-y: auto; padding: 4px 6px; background: #edf2f7; border-radius: 4px;"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- LISTA FORMATADA DE ARTIGOS REAIS -->
+  <div style="background-color: #f0f3f6; border: 1.5px solid #b8bfc8; border-radius: 14px; padding: 18px 20px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1.5px solid #cbd5e0; padding-bottom: 8px;">
+      <h3 style="font-size: 1.05rem; font-weight: 800; color: #2b6cb0;">Artigos Extraídos Oficialmente do PubMed</h3>
+      <span id="label-papers-count" style="font-size: 0.8rem; font-weight: 700; color: #4a5568;">Carregando registros...</span>
+    </div>
+
+    <div id="articles-stream-container" class="pub-list"></div>
+  </div>
+
+</div>
+
+<style>
+  .preset-badge {
+    background-color: #ffffff; border: 1px solid #b8bfc8; padding: 4px 10px; border-radius: 6px;
+    font-size: 0.75rem; font-weight: 700; color: #2b6cb0; cursor: pointer; transition: all 0.2s ease;
+  }
+  .preset-badge:hover { background-color: #2b6cb0; color: #ffffff; border-color: #2b6cb0; }
+  .action-btn { border-radius: 8px; font-weight: 800; transition: all 0.2s ease; }
+  .action-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+
+  /* CARDS INTELIGENTES INTERATIVOS */
+  .smart-window {
+    position: absolute; display: none; width: 310px;
+    background: rgba(255, 255, 255, 0.98); border: 1.5px solid #cbd5e0;
+    border-radius: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.22);
+    z-index: 100; user-select: none; backdrop-filter: blur(8px);
+    transition: opacity 0.15s ease;
+  }
+  .window-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 6px 10px; background: #f8fafc; border-bottom: 1px solid #e2e8f0;
+    border-radius: 8px 8px 0 0; cursor: grab;
+  }
+  .window-header:active { cursor: grabbing; }
+  .window-badge {
+    font-size: 0.68rem; font-weight: 800; letter-spacing: 0.5px;
+    padding: 2px 6px; border-radius: 4px;
+  }
+  .btn-close-window {
+    background: none; border: none; font-size: 0.85rem; font-weight: 800;
+    color: #718096; cursor: pointer; padding: 0 4px; line-height: 1;
+  }
+  .btn-close-window:hover { color: #e53e3e; }
+  .window-body { padding: 10px 12px; }
+</style>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+<script>
+  let serverData = {{ initial_data_json|safe }};
+
+  const statTotal = document.getElementById('stat-total');
+  const statAuthors = document.getElementById('stat-authors');
+  const statLinks = document.getElementById('stat-links');
+  const articlesContainer = document.getElementById('articles-stream-container');
+  const labelPapersCount = document.getElementById('label-papers-count');
+
+  // FUNÇÃO UNIVERSAL DE POSICIONAMENTO INTELIGENTE (ANTI-CORTE / AUTO-FLIP)
+  function setSmartPosition(element, container, mouseX, mouseY) {
+    if (element.dataset.isPinned === "true") return; // Mantém onde o usuário arrastou se estiver fixado
+
+    const cRect = container.getBoundingClientRect();
+    const eWidth = element.offsetWidth || 310;
+    const eHeight = element.offsetHeight || 180;
+    const padding = 12;
+
+    // Se estiver na metade direita do container, inverte para a esquerda do cursor
+    let left = (mouseX + eWidth + padding > cRect.width) 
+      ? (mouseX - eWidth - padding) 
+      : (mouseX + padding);
+
+    // Se estiver na metade inferior do container, inverte para cima do cursor
+    let top = (mouseY + eHeight + padding > cRect.height) 
+      ? (mouseY - eHeight - padding) 
+      : (mouseY + padding);
+
+    // Confinamento rigoroso dentro das 4 bordas
+    left = Math.max(padding, Math.min(cRect.width - eWidth - padding, left));
+    top = Math.max(padding, Math.min(cRect.height - eHeight - padding, top));
+
+    element.style.left = `${left}px`;
+    element.style.top = `${top}px`;
+  }
+
+  // FUNÇÃO UNIVERSAL DE ARRASTE MANUAL COM O MOUSE
+  function makeWindowDraggable(element, handle, container) {
+    let isDragging = false;
+    let startX = 0, startY = 0;
+    let initialLeft = 0, initialTop = 0;
+
+    handle.addEventListener('mousedown', (e) => {
+      e.stopPropagation();
+      isDragging = true;
+      element.dataset.isPinned = "true";
+      startX = e.clientX;
+      startY = e.clientY;
+      initialLeft = element.offsetLeft;
+      initialTop = element.offsetTop;
+      document.body.style.cursor = 'grabbing';
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      const cRect = container.getBoundingClientRect();
+
+      let newLeft = Math.max(4, Math.min(cRect.width - element.offsetWidth - 4, initialLeft + dx));
+      let newTop = Math.max(4, Math.min(cRect.height - element.offsetHeight - 4, initialTop + dy));
+
+      element.style.left = `${newLeft}px`;
+      element.style.top = `${newTop}px`;
+    });
+
+    window.addEventListener('mouseup', () => {
+      if (isDragging) {
+        isDragging = false;
+        document.body.style.cursor = 'default';
+      }
+    });
+  }
+
+  // =====================================================================
+  // 1. CENA 3D DA ESQUERDA: MAPA SEMÂNTICO DOS PAPERS
+  // =====================================================================
+  const c1 = document.getElementById('knowledge-3d-container');
+  const tt3d = document.getElementById('hover-tooltip-3d');
+  const header1 = tt3d.querySelector('.window-header');
+  const pinInd1 = document.getElementById('pin-indicator-1');
+  const closeBtn1 = document.getElementById('close-tt-1');
+
+  makeWindowDraggable(tt3d, header1, c1);
+
+  closeBtn1.addEventListener('click', (e) => {
+    e.stopPropagation();
+    tt3d.dataset.isPinned = "false";
+    tt3d.style.display = 'none';
+    pinInd1.textContent = '[Clique: Fixar]';
+    if (hoverObj1) {
+      hoverObj1.scale.set(1.0, 1.0, 1.0);
+      hoverObj1 = null;
+    }
+  });
+
+  const ttTitle = document.getElementById('tooltip-title');
+  const ttAuthors = document.getElementById('tooltip-authors');
+  const ttJournal = document.getElementById('tooltip-journal');
+  const ttRelations = document.getElementById('tooltip-relations');
+  const ttSnippet = document.getElementById('tooltip-snippet');
+
+  const scene1 = new THREE.Scene();
+  scene1.background = new THREE.Color(0xf1f5f9);
+
+  const camera1 = new THREE.PerspectiveCamera(40, c1.clientWidth / c1.clientHeight, 0.1, 1000);
+  camera1.position.set(38, 28, 44);
+
+  const renderer1 = new THREE.WebGLRenderer({ antialias: true });
+  renderer1.setSize(c1.clientWidth, c1.clientHeight);
+  renderer1.setPixelRatio(window.devicePixelRatio);
+  c1.appendChild(renderer1.domElement);
+
+  const controls1 = new THREE.OrbitControls(camera1, renderer1.domElement);
+  controls1.enableDamping = true;
+  controls1.dampingFactor = 0.05;
+
+  const amb1 = new THREE.AmbientLight(0xffffff, 0.95);
+  scene1.add(amb1);
+  const dir1 = new THREE.DirectionalLight(0xffffff, 0.7);
+  dir1.position.set(25, 45, 25);
+  scene1.add(dir1);
+
+  const box1 = new THREE.BoxGeometry(32, 20, 26);
+  const edges1 = new THREE.EdgesGeometry(box1);
+  const lines1 = new THREE.LineSegments(edges1, new THREE.LineBasicMaterial({ color: 0x475569, linewidth: 2 }));
+  lines1.position.set(0, 10, 0);
+  scene1.add(lines1);
+
+  const axes1 = new THREE.AxesHelper(20);
+  axes1.position.set(-16, 0.1, 13);
+  scene1.add(axes1);
+
+  const grid1 = new THREE.GridHelper(32, 16, 0x64748b, 0xcbd5e1);
+  grid1.position.set(0, 0.1, 0);
+  scene1.add(grid1);
+
+  let meshes1 = [];
+  let map1Links = [];
+  let nodeMap1 = {};
+  const clusterColors = [0x0969da, 0x1a7f37, 0xcf222e, 0xb08800, 0x8250df, 0x0550ae];
+
+  function updateScene1(kMap, articlesList) {
+    meshes1.forEach(m => scene1.remove(m));
+    map1Links.forEach(l => scene1.remove(l));
+    meshes1 = [];
+    map1Links = [];
+    nodeMap1 = {};
+
+    const nodes = kMap.nodes || [];
+    const links = kMap.links || [];
+
+    const artMap = {};
+    if (articlesList) articlesList.forEach(a => { artMap[a.id] = a; });
+
+    const neighbors = {};
+    nodes.forEach(n => { neighbors[n.id] = []; });
+    links.forEach(l => {
+      const sym = l.directional ? ' ➔ ' : ' ⇄ ';
+      if (neighbors[l.source]) neighbors[l.source].push({ id: l.target, w: l.weight, sym: sym });
+      if (!l.directional && neighbors[l.target]) {
+        neighbors[l.target].push({ id: l.source, w: l.weight, sym: sym });
+      }
+    });
+
+    const sphereGeo = new THREE.SphereGeometry(1.0, 16, 16);
+
+    nodes.forEach(item => {
+      const col = clusterColors[item.cluster % clusterColors.length];
+      const mat = new THREE.MeshLambertMaterial({ color: col });
+      const mesh = new THREE.Mesh(sphereGeo, mat);
+      
+      const cx = Math.max(-14, Math.min(14, item.x));
+      const cy = Math.max(1, Math.min(18, item.y + 10));
+      const cz = Math.max(-11, Math.min(11, item.z));
+
+      mesh.position.set(cx, cy, cz);
+      const fullArt = artMap[item.id] || {};
+      mesh.userData = {
+        id: item.id,
+        title: item.title,
+        authors: item.authors,
+        year: item.year,
+        pmid: item.id,
+        journal: fullArt.journal || "PubMed Indexado",
+        snippet: fullArt.abstract_snippet || "Resumo processado por PLN.",
+        relations: neighbors[item.id] || []
+      };
+
+      nodeMap1[item.id] = mesh;
+      scene1.add(mesh);
+      meshes1.push(mesh);
+    });
+
+    links.forEach(l => {
+      const m1 = nodeMap1[l.source];
+      const m2 = nodeMap1[l.target];
+      if (m1 && m2) {
+        const v1 = m1.position.clone();
+        const v2 = m2.position.clone();
+        const points = [v1, v2];
+        const lineGeo = new THREE.BufferGeometry().setFromPoints(points);
+        
+        const edgeColor = l.directional ? 0xc53030 : 0x276749;
+        const lineMat = new THREE.LineBasicMaterial({
+          color: edgeColor,
+          transparent: true,
+          opacity: 0.8,
+          linewidth: 2.0
+        });
+        const lineMesh = new THREE.Line(lineGeo, lineMat);
+        lineMesh.userData = { source: l.source, target: l.target, baseColor: edgeColor };
+        scene1.add(lineMesh);
+        map1Links.push(lineMesh);
+
+        if (l.directional) {
+          const dir = new THREE.Vector3().subVectors(v2, v1);
+          const len = dir.length();
+          dir.normalize();
+
+          const arrowPos = new THREE.Vector3().addVectors(v1, dir.clone().multiplyScalar(len * 0.65));
+          const coneGeo = new THREE.ConeGeometry(0.45, 1.3, 8);
+          coneGeo.rotateX(Math.PI / 2);
+
+          const coneMat = new THREE.MeshBasicMaterial({ color: 0xc53030 });
+          const coneMesh = new THREE.Mesh(coneGeo, coneMat);
+          coneMesh.position.copy(arrowPos);
+          coneMesh.lookAt(v2);
+          coneMesh.userData = { source: l.source, target: l.target, isArrow: true };
+          scene1.add(coneMesh);
+          map1Links.push(coneMesh);
+        }
+      }
+    });
+  }
+
+  const raycaster1 = new THREE.Raycaster();
+  const mouse1 = new THREE.Vector2();
+  let hoverObj1 = null;
+
+  c1.addEventListener('mousemove', (e) => {
+    const rect = c1.getBoundingClientRect();
+    const cx = e.clientX - rect.left;
+    const cy = e.clientY - rect.top;
+    mouse1.x = (cx / c1.clientWidth) * 2 - 1;
+    mouse1.y = -(cy / c1.clientHeight) * 2 + 1;
+
+    raycaster1.setFromCamera(mouse1, camera1);
+    const intersects = raycaster1.intersectObjects(meshes1);
+
+    if (intersects.length > 0) {
+      const obj = intersects[0].object;
+      const d = obj.userData;
+
+      if (hoverObj1 && hoverObj1 !== obj) hoverObj1.scale.set(1.0, 1.0, 1.0);
+      hoverObj1 = obj;
+      obj.scale.set(1.35, 1.35, 1.35);
+
+      map1Links.forEach(l => {
+        if (l.userData.source === d.id || l.userData.target === d.id) {
+          if (l.material) {
+            l.material.color.setHex(0x1a7f37);
+            l.material.opacity = 1.0;
+          }
+        } else {
+          if (l.material) l.material.opacity = 0.12;
+        }
+      });
+
+      ttTitle.textContent = d.title;
+      ttAuthors.textContent = `Autores: ${d.authors} (${d.year})`;
+      ttJournal.textContent = `Periódico: ${d.journal} | PMID ${d.pmid}`;
+
+      const rels = d.relations.map(r => `PMID ${r.id}${r.sym}(cos ${r.w})`).slice(0, 4);
+      ttRelations.textContent = `Conexões semânticas (${d.relations.length}): ${rels.join(', ') || 'Sem arestas no limiar'}`;
+      ttSnippet.textContent = d.snippet;
+
+      tt3d.style.display = 'block';
+      setSmartPosition(tt3d, c1, cx, cy);
+    } else {
+      if (hoverObj1 && tt3d.dataset.isPinned !== "true") {
+        hoverObj1.scale.set(1.0, 1.0, 1.0);
+        hoverObj1 = null;
+        map1Links.forEach(l => {
+          if (l.material) {
+            l.material.color.setHex(l.userData.baseColor || 0xc53030);
+            l.material.opacity = 0.8;
+          }
+        });
+        tt3d.style.display = 'none';
+      }
+    }
+  });
+
+  c1.addEventListener('click', (e) => {
+    if (hoverObj1) {
+      tt3d.dataset.isPinned = "true";
+      pinInd1.textContent = '[Fixado - Arraste]';
+    }
+  });
+
+  // =====================================================================
+  // 2. CENA 3D DA DIREITA: GRAFO 3D DE AUTORES
+  // =====================================================================
+  const c2 = document.getElementById('network-3d-container');
+  const ttNet = document.getElementById('hover-tooltip-net');
+  const header2 = ttNet.querySelector('.window-header');
+  const pinInd2 = document.getElementById('pin-indicator-2');
+  const closeBtn2 = document.getElementById('close-tt-2');
+
+  makeWindowDraggable(ttNet, header2, c2);
+
+  closeBtn2.addEventListener('click', (e) => {
+    e.stopPropagation();
+    ttNet.dataset.isPinned = "false";
+    ttNet.style.display = 'none';
+    pinInd2.textContent = '[Clique: Fixar]';
+    if (hoverObj2) {
+      hoverObj2.scale.set(1.0, 1.0, 1.0);
+      hoverObj2.material.color.setHex(0x2b6cb0);
+      hoverObj2 = null;
+    }
+    linkObjects.forEach(l => {
+      if (l.material) {
+        l.material.color.setHex(l.userData.baseColor || 0xc53030);
+        l.material.opacity = 0.85;
+      }
+    });
+  });
+
+  const netTtName = document.getElementById('net-tt-name');
+  const netTtInst = document.getElementById('net-tt-inst');
+  const netTtPapers = document.getElementById('net-tt-papers');
+  const netTtRelations = document.getElementById('net-tt-relations');
+
+  const scene2 = new THREE.Scene();
+  scene2.background = new THREE.Color(0xf1f5f9);
+
+  const camera2 = new THREE.PerspectiveCamera(40, c2.clientWidth / c2.clientHeight, 0.1, 1000);
+  camera2.position.set(38, 28, 44);
+
+  const renderer2 = new THREE.WebGLRenderer({ antialias: true });
+  renderer2.setSize(c2.clientWidth, c2.clientHeight);
+  renderer2.setPixelRatio(window.devicePixelRatio);
+  c2.appendChild(renderer2.domElement);
+
+  const controls2 = new THREE.OrbitControls(camera2, renderer2.domElement);
+  controls2.enableDamping = true;
+  controls2.dampingFactor = 0.05;
+
+  const amb2 = new THREE.AmbientLight(0xffffff, 0.95);
+  scene2.add(amb2);
+  const dir2 = new THREE.DirectionalLight(0xffffff, 0.7);
+  dir2.position.set(25, 45, 25);
+  scene2.add(dir2);
+
+  const box2 = new THREE.BoxGeometry(32, 20, 26);
+  const edges2 = new THREE.EdgesGeometry(box2);
+  const lines2 = new THREE.LineSegments(edges2, new THREE.LineBasicMaterial({ color: 0x475569, linewidth: 2 }));
+  lines2.position.set(0, 10, 0);
+  scene2.add(lines2);
+
+  const grid2 = new THREE.GridHelper(32, 16, 0x64748b, 0xcbd5e1);
+  grid2.position.set(0, 0.1, 0);
+  scene2.add(grid2);
+
+  let authorMeshes = [];
+  let linkObjects = [];
+  let nodeMap2 = {};
+
+  function updateScene2(network) {
+    authorMeshes.forEach(m => scene2.remove(m));
+    linkObjects.forEach(l => scene2.remove(l));
+    authorMeshes = [];
+    linkObjects = [];
+    nodeMap2 = {};
+
+    const nodes = network.nodes || [];
+    const links = network.links || [];
+
+    const neighbors = {};
+    nodes.forEach(n => { neighbors[n.id] = []; });
+    links.forEach(l => {
+      const arrowSymbol = l.directional ? ' ➔ ' : ' ⇄ ';
+      if (neighbors[l.source]) neighbors[l.source].push({ id: l.target, w: l.weight, type: l.type, sym: arrowSymbol });
+      if (!l.directional && neighbors[l.target]) {
+        neighbors[l.target].push({ id: l.source, w: l.weight, type: l.type, sym: arrowSymbol });
+      }
+    });
+
+    const sphereGeo = new THREE.SphereGeometry(1.15, 16, 16);
+    nodes.forEach(n => {
+      const mat = new THREE.MeshLambertMaterial({ color: 0x2b6cb0 });
+      const mesh = new THREE.Mesh(sphereGeo, mat);
+
+      const px = Math.max(-14, Math.min(14, n.x));
+      const py = Math.max(1.5, Math.min(18, n.y + 10));
+      const pz = Math.max(-11, Math.min(11, n.z));
+      mesh.position.set(px, py, pz);
+
+      mesh.userData = {
+        id: n.id,
+        label: n.label,
+        inst: n.inst,
+        papers: n.count,
+        relations: neighbors[n.id] || []
+      };
+
+      nodeMap2[n.id] = mesh;
+      scene2.add(mesh);
+      authorMeshes.push(mesh);
+    });
+
+    links.forEach(l => {
+      const m1 = nodeMap2[l.source];
+      const m2 = nodeMap2[l.target];
+      if (m1 && m2) {
+        const v1 = m1.position.clone();
+        const v2 = m2.position.clone();
+        const points = [v1, v2];
+        const lineGeo = new THREE.BufferGeometry().setFromPoints(points);
+        
+        const edgeColor = l.directional ? 0xc53030 : 0x276749;
+        const lineMat = new THREE.LineBasicMaterial({
+          color: edgeColor,
+          transparent: true,
+          opacity: 0.85,
+          linewidth: 2.2
+        });
+        const lineMesh = new THREE.Line(lineGeo, lineMat);
+        lineMesh.userData = { source: l.source, target: l.target, directional: l.directional, baseColor: edgeColor };
+        scene2.add(lineMesh);
+        linkObjects.push(lineMesh);
+
+        if (l.directional) {
+          const dir = new THREE.Vector3().subVectors(v2, v1);
+          const len = dir.length();
+          dir.normalize();
+
+          const arrowPos = new THREE.Vector3().addVectors(v1, dir.clone().multiplyScalar(len * 0.65));
+          const coneGeo = new THREE.ConeGeometry(0.5, 1.4, 8);
+          coneGeo.rotateX(Math.PI / 2);
+
+          const coneMat = new THREE.MeshBasicMaterial({ color: 0xc53030 });
+          const coneMesh = new THREE.Mesh(coneGeo, coneMat);
+          coneMesh.position.copy(arrowPos);
+          coneMesh.lookAt(v2);
+
+          coneMesh.userData = { source: l.source, target: l.target, isArrow: true };
+          scene2.add(coneMesh);
+          linkObjects.push(coneMesh);
+        }
+      }
+    });
+  }
+
+  const raycaster2 = new THREE.Raycaster();
+  const mouse2 = new THREE.Vector2();
+  let hoverObj2 = null;
+
+  c2.addEventListener('mousemove', (e) => {
+    const rect = c2.getBoundingClientRect();
+    const cx = e.clientX - rect.left;
+    const cy = e.clientY - rect.top;
+    mouse2.x = (cx / c2.clientWidth) * 2 - 1;
+    mouse2.y = -(cy / c2.clientHeight) * 2 + 1;
+
+    raycaster2.setFromCamera(mouse2, camera2);
+    const intersects = raycaster2.intersectObjects(authorMeshes);
+
+    if (intersects.length > 0) {
+      const obj = intersects[0].object;
+      const d = obj.userData;
+
+      if (hoverObj2 && hoverObj2 !== obj) {
+        hoverObj2.scale.set(1.0, 1.0, 1.0);
+        hoverObj2.material.color.setHex(0x2b6cb0);
+      }
+      hoverObj2 = obj;
+      obj.scale.set(1.4, 1.4, 1.4);
+      obj.material.color.setHex(0x1a7f37);
+
+      linkObjects.forEach(l => {
+        if (l.userData.source === d.id || l.userData.target === d.id) {
+          if (l.material) {
+            l.material.color.setHex(0x1a7f37);
+            l.material.opacity = 1.0;
+          }
+        } else {
+          if (l.material) l.material.opacity = 0.12;
+        }
+      });
+
+      netTtName.textContent = `Investigador: ${d.label}`;
+      netTtInst.textContent = `Centro: ${d.inst}`;
+      netTtPapers.textContent = `Produção analisada: ${d.papers} paper(s)`;
+      
+      const relsList = d.relations.map(r => `${r.sym}${r.id.split(' ')[0]} (cos: ${r.w})`).slice(0, 6);
+      netTtRelations.innerHTML = `<strong>Relações Conectadas (${d.relations.length}):</strong><br>${relsList.join(', ') || 'Sem ligações diretas no corte'}`;
+
+      ttNet.style.display = 'block';
+      setSmartPosition(ttNet, c2, cx, cy);
+    } else {
+      if (hoverObj2 && ttNet.dataset.isPinned !== "true") {
+        hoverObj2.scale.set(1.0, 1.0, 1.0);
+        hoverObj2.material.color.setHex(0x2b6cb0);
+        hoverObj2 = null;
+        linkObjects.forEach(l => {
+          if (l.material) {
+            l.material.color.setHex(l.userData.baseColor || 0xc53030);
+            l.material.opacity = 0.85;
+          }
+        });
+        ttNet.style.display = 'none';
+      }
+    }
+  });
+
+  c2.addEventListener('click', (e) => {
+    if (hoverObj2) {
+      ttNet.dataset.isPinned = "true";
+      pinInd2.textContent = '[Fixado - Arraste]';
+    }
+  });
+
+  // =====================================================================
+  // 3. RENDER DA LISTA DE ARTIGOS REAIS
+  // =====================================================================
+  function renderArticlesList(articles) {
+    articlesContainer.innerHTML = '';
+    if (!articles || articles.length === 0) {
+      articlesContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: #718096; font-weight: 700;">Nenhum artigo real retornado pela base de dados.</div>';
+      return;
+    }
+
+    articles.forEach(art => {
+      const el = document.createElement('article');
+      el.className = 'pub-item';
+      el.innerHTML = `
+        <div class="pub-content">
+          <a class="pub-title" href="${art.doi}" target="_blank">${art.title}</a>
+          <div class="pub-authors">${art.authors}</div>
+          <div class="pub-journal">${art.journal} - <strong>${art.institution}</strong></div>
+          <p style="font-size: 0.82rem; color: #4a5568; margin-top: 6px; line-height: 1.45;">${art.abstract_snippet}</p>
+        </div>
+        <div class="pub-actions">
+          <span class="pub-year">${art.year} | PMID ${art.pmid}</span>
+          <a class="doi-badge" href="${art.doi}" target="_blank">Artigo Oficial</a>
+        </div>
+      `;
+      articlesContainer.appendChild(el);
+    });
+  }
+
+  function applyDataset(data) {
+    statTotal.textContent = `${data.total_analyzed} papers`;
+    statAuthors.textContent = `${data.network_3d.nodes.length} autores`;
+    const totalLinks = (data.knowledge_map_3d.links ? data.knowledge_map_3d.links.length : 0) + (data.network_3d.links ? data.network_3d.links.length : 0);
+    statLinks.textContent = `${totalLinks} conexões 3D`;
+    labelPapersCount.textContent = `A exibir ${data.articles.length} registros autênticos do PubMed`;
+
+    updateScene1(data.knowledge_map_3d, data.articles);
+    updateScene2(data.network_3d);
+    renderArticlesList(data.articles);
+  }
+
+  async function triggerSearch(queryText) {
+    const limit = document.getElementById('pubmed-limit').value;
+    const btn = document.getElementById('btn-search-pubmed');
+    btn.textContent = 'Processando PubMed...';
+    btn.disabled = true;
+
+    try {
+      const resp = await fetch(`/api/pubmed-search/?q=${encodeURIComponent(queryText)}&limit=${limit}`);
+      const data = await resp.json();
+      applyDataset(data);
+    } catch (err) {
+      console.error(err);
+      alert('Falha na ligação à API do PubMed. Tente novamente.');
+    } finally {
+      btn.textContent = 'Buscar e Processar';
+      btn.disabled = false;
+    }
+  }
+
+  document.getElementById('btn-search-pubmed').addEventListener('click', () => {
+    const q = document.getElementById('pubmed-query-input').value.trim();
+    if (q) triggerSearch(q);
+  });
+
+  document.getElementById('pubmed-query-input').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      const q = e.target.value.trim();
+      if (q) triggerSearch(q);
+    }
+  });
+
+  document.querySelectorAll('.preset-badge').forEach(badge => {
+    badge.addEventListener('click', () => {
+      const q = badge.getAttribute('data-query');
+      document.getElementById('pubmed-query-input').value = q;
+      triggerSearch(q);
+    });
+  });
+
+  function animateLoop() {
+    requestAnimationFrame(animateLoop);
+    controls1.update();
+    renderer1.render(scene1, camera1);
+    controls2.update();
+    renderer2.render(scene2, camera2);
+  }
+  animateLoop();
+
+  window.addEventListener('resize', () => {
+    camera1.aspect = c1.clientWidth / c1.clientHeight;
+    camera1.updateProjectionMatrix();
+    renderer1.setSize(c1.clientWidth, c1.clientHeight);
+
+    camera2.aspect = c2.clientWidth / c2.clientHeight;
+    camera2.updateProjectionMatrix();
+    renderer2.setSize(c2.clientWidth, c2.clientHeight);
+  });
+
+  applyDataset(serverData);
+</script>
+{% endblock %}

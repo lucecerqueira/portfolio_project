@@ -1,0 +1,224 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Lucenildo Silva Cerqueira, DSc.{% endblock %}</title>
+  <link rel="icon" type="image/png" href="{% static 'core/favicon.png' %}">
+  <style>
+    :root {
+      /* PALETA DE BANCADA PLATINUM / CINZA INDUSTRIAL */
+      --bg-primary: #e6e9ee;
+      --bg-secondary: #dce0e6;
+      --surface: #f4f6f9;
+      --surface-hover: #ffffff;
+      --border-clay: #b8c1cc;
+      --border-strong: #9aa4b2;
+      --text-primary: #1a202c;
+      --text-secondary: #4a5568;
+      --accent: #2b6cb0;
+      --accent-hover: #1e4e80;
+      --accent-glow: rgba(43, 108, 176, 0.15);
+      
+      /* RELEVO CLAYMORPHIC CLARO / HARDWARE CHASSIS */
+      --clay-shadow: 8px 8px 18px rgba(0, 0, 0, 0.08), -6px -6px 14px #ffffff, inset 1px 1px 2px #ffffff, inset -1px -1px 2px rgba(0, 0, 0, 0.05);
+      --clay-shadow-hover: 10px 10px 22px rgba(0, 0, 0, 0.12), -8px -8px 18px #ffffff, inset 1px 1px 3px #ffffff, inset -1px -1px 3px rgba(0, 0, 0, 0.08);
+      --clay-button: 4px 4px 10px rgba(0, 0, 0, 0.08), -3px -3px 8px #ffffff, inset 1px 1px 1px #ffffff;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
+    }
+    
+    header.top-nav {
+      position: sticky; top: 0; z-index: 1000;
+      background-color: rgba(230, 233, 238, 0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1.5px solid var(--border-clay);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+    }
+    .nav-container {
+      max-width: 1140px; margin: 0 auto; padding: 0 24px; height: 70px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .brand {
+      font-size: 1.15rem; font-weight: 800; color: var(--text-primary); text-decoration: none;
+    }
+    .brand span { color: var(--accent); }
+    
+    nav.nav-links { display: flex; gap: 10px; align-items: center; }
+    nav.nav-links a {
+      color: var(--text-secondary); text-decoration: none; font-size: 0.88rem; font-weight: 700;
+      padding: 7px 12px; border-radius: 8px; transition: all 0.2s ease;
+    }
+    nav.nav-links a:hover, nav.nav-links a.active {
+      color: var(--accent); background-color: var(--surface); box-shadow: var(--clay-button);
+    }
+    .btn-login {
+      border: 1.5px solid var(--border-clay); background-color: var(--surface); color: var(--accent) !important;
+    }
+
+    /* DROPDOWN ENGENHARIA BIOMÉDICA */
+    .dropdown { position: relative; display: inline-flex; align-items: center; height: 70px; }
+    .dropdown-btn {
+      color: var(--accent) !important; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 6px;
+      padding: 7px 12px; border-radius: 8px; user-select: none; background: transparent; border: none; font-size: 0.88rem; font-family: inherit;
+    }
+    .dropdown-btn:hover { background-color: var(--surface); box-shadow: var(--clay-button); }
+    .dropdown-content {
+      display: none; position: absolute; top: calc(100% - 10px); left: 0; min-width: 250px;
+      background-color: var(--surface); border: 1.5px solid var(--border-clay); border-radius: 12px;
+      box-shadow: var(--clay-shadow-hover); padding: 8px 0; z-index: 1200;
+    }
+    .dropdown-content::before { content: ""; position: absolute; top: -14px; left: 0; width: 100%; height: 16px; background: transparent; }
+    .dropdown-content a {
+      display: block; padding: 11px 20px; color: var(--text-secondary); text-decoration: none; font-size: 0.86rem; font-weight: 700; border-radius: 0;
+    }
+    .dropdown-content a:hover { color: var(--accent); background-color: #e2e8f0; }
+    .dropdown:hover .dropdown-content, .dropdown.open .dropdown-content { display: block; }
+
+    main { max-width: 1140px; margin: 0 auto; padding: 40px 24px 80px; }
+    
+    .hero {
+      display: grid; grid-template-columns: 1.25fr 1fr; gap: 36px; align-items: center; padding: 30px 0 45px;
+      border-bottom: 1.5px solid var(--border-clay);
+    }
+    .hero h1 { font-size: 2.3rem; line-height: 1.2; margin-bottom: 12px; color: var(--text-primary); font-weight: 800; }
+    .hero .subtitle { font-size: 1.15rem; color: var(--accent); font-weight: 700; margin-bottom: 18px; }
+    .hero p { color: var(--text-secondary); margin-bottom: 24px; font-size: 0.98rem; }
+    .social-links { display: flex; flex-wrap: wrap; gap: 10px; }
+    .btn-link {
+      display: inline-block; padding: 8px 16px; background-color: var(--surface); border: 1.5px solid var(--border-clay);
+      border-radius: 10px; color: var(--text-primary); text-decoration: none; font-size: 0.85rem; font-weight: 700;
+      box-shadow: var(--clay-button); transition: all 0.2s ease;
+    }
+    .btn-link:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-2px); }
+
+    .hero-visual {
+      background-color: var(--surface); border: 1.5px solid var(--border-clay); border-radius: 20px;
+      padding: 14px; text-align: center; box-shadow: var(--clay-shadow); position: relative;
+    }
+
+    section { padding-top: 50px; }
+    .section-header { margin-bottom: 26px; border-bottom: 1.5px solid var(--border-clay); padding-bottom: 12px; }
+    .section-header h2 { font-size: 1.6rem; color: var(--text-primary); font-weight: 800; }
+    .section-header p { font-size: 0.94rem; color: var(--text-secondary); margin-top: 6px; }
+
+    .pillars-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+    .card {
+      background-color: var(--surface); border: 1.5px solid var(--border-clay); border-radius: 18px;
+      padding: 24px; box-shadow: var(--clay-shadow); transition: all 0.3s ease;
+    }
+    .card:hover { background-color: var(--surface-hover); transform: translateY(-3px); box-shadow: var(--clay-shadow-hover); }
+    .card h3 { font-size: 1.1rem; color: var(--accent); margin-bottom: 10px; font-weight: 700; }
+    .card p { font-size: 0.92rem; color: var(--text-secondary); }
+
+    .tag-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+    .tag {
+      background-color: rgba(43, 108, 176, 0.08); color: var(--accent); font-size: 0.78rem; font-weight: 700;
+      padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(43, 108, 176, 0.2);
+    }
+
+    /* ESTILOS DE PUBLICAÇÕES CLARAS */
+    .pub-list { display: flex; flex-direction: column; gap: 16px; margin-top: 14px; }
+    .pub-item {
+      background-color: var(--surface); border: 1.5px solid var(--border-clay); border-radius: 16px;
+      padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; gap: 20px;
+      box-shadow: var(--clay-shadow); transition: all 0.3s ease;
+    }
+    .pub-item:hover { background-color: var(--surface-hover); border-color: var(--accent); transform: translateY(-2px); }
+    .pub-content { flex: 1; }
+    .pub-title { font-size: 1.02rem; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; display: block; text-decoration: none; }
+    .pub-authors { font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 4px; }
+    .pub-journal { font-size: 0.85rem; color: var(--accent); font-style: italic; font-weight: 600; }
+    .pub-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; min-width: 140px; text-align: right; }
+    .doi-badge {
+      display: inline-block; padding: 6px 14px; background-color: #ffffff; border: 1.5px solid var(--border-clay);
+      border-radius: 8px; color: var(--accent); font-size: 0.78rem; font-weight: 700; text-decoration: none;
+      white-space: nowrap; box-shadow: var(--clay-button); transition: all 0.2s ease;
+    }
+    .doi-badge:hover { background-color: var(--accent); color: #ffffff; border-color: var(--accent); }
+    .pub-year { font-size: 0.8rem; color: var(--text-secondary); font-weight: 700; }
+
+    /* TIMELINE ACADÊMICA */
+    .academic-timeline { margin-top: 24px; display: flex; flex-direction: column; gap: 16px; }
+    .timeline-item {
+      background-color: var(--surface); border: 1.5px solid var(--border-clay); border-radius: 16px;
+      padding: 20px 24px; box-shadow: var(--clay-shadow);
+    }
+    .timeline-item h4 { color: var(--accent); font-size: 1.05rem; margin-bottom: 4px; font-weight: 700; }
+    .timeline-item span { font-size: 0.85rem; color: #4a5568; font-weight: 700; display: block; margin-bottom: 6px; }
+    .timeline-item p { font-size: 0.92rem; color: var(--text-secondary); }
+
+    footer {
+      border-top: 1.5px solid var(--border-clay); padding: 30px 24px; text-align: center;
+      color: var(--text-secondary); font-size: 0.85rem; background-color: var(--bg-secondary); margin-top: 50px; font-weight: 600;
+    }
+    footer a { color: var(--accent); text-decoration: none; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <header class="top-nav">
+    <div class="nav-container">
+      <a href="{% url 'home' %}" class="brand">Lucenildo Cerqueira<span>, DSc.</span></a>
+      <nav class="nav-links">
+        <a href="{% url 'home' %}">Início</a>
+        <a href="{% url 'projetos' %}">Projetos</a>
+        <a href="{% url 'publicacoes' %}">Publicações</a>
+        <a href="{% url 'stack' %}">Stack</a>
+
+        <div class="dropdown" id="bio-dropdown">
+          <button type="button" class="dropdown-btn" id="bio-dropdown-btn">
+            Engenharia Biomédica ▾
+          </button>
+          <div class="dropdown-content">
+            <a href="{% url 'lab_dsp' %}">📟 Osciloscópio & DSP</a>
+            <a href="{% url 'lab_vcg' %}">🩺 Vetorcardiograma 3D</a>
+            <a href="{% url 'lab_duckdb' %}">🔬 Mineração PubMed 📊 DuckDB-WASM Saúde PLN</a>
+          </div>
+        </div>
+
+        <a href="{% url 'blog_lista' %}">Blog</a>
+        <a href="{% url 'contato' %}">Contato</a>
+        
+        {% if user.is_authenticated %}
+          <a href="{% url 'sobre_mim' %}">Sobre Mim</a>
+          <a href="{% url 'admin:index' %}" class="btn-login">Admin</a>
+          <a href="{% url 'logout' %}" class="btn-login">Sair</a>
+        {% else %}
+          <a href="{% url 'login' %}" class="btn-login">Entrar</a>
+        {% endif %}
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer>
+    <p>Lucenildo Silva Cerqueira, DSc. — Licenciado sob <a href="./LICENSE">MIT License</a>.</p>
+  </footer>
+
+  <script>
+    const dropdown = document.getElementById('bio-dropdown');
+    const dropdownBtn = document.getElementById('bio-dropdown-btn');
+
+    dropdownBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      dropdown.classList.toggle('open');
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!dropdown.contains(e.target)) {
+        dropdown.classList.remove('open');
+      }
+    });
+  </script>
+</body>
+</html>

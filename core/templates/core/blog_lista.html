@@ -1,0 +1,17 @@
+{% extends 'core/base.html' %}
+{% block title %}Blog | Lucenildo Silva Cerqueira, DSc.{% endblock %}
+{% block content %}
+<div class="section-header">
+  <h2>Blog Acadêmico & Tecnológico</h2>
+  <p>Artigos, reflexões e tutoriais gerenciados pelo painel administrativo.</p>
+</div>
+{% for post in posts %}
+  <div class="card" style="margin-bottom: 20px;">
+    <span style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 8px; display: block;">{{ post.data_publicacao|date:"d/m/Y H:i" }}</span>
+    <h3 style="margin-bottom: 10px;"><a href="{% url 'blog_detalhe' post.slug %}" style="color: var(--accent); text-decoration: none;">{{ post.titulo }}</a></h3>
+    <p>{{ post.conteudo|truncatewords:30 }}</p>
+  </div>
+{% empty %}
+  <p style="color: var(--text-secondary);">Nenhum post publicado ainda. Acesse o <a href="{% url 'admin:index' %}" style="color: var(--accent);">Painel Administrativo</a> para criar o primeiro!</p>
+{% endfor %}
+{% endblock %}

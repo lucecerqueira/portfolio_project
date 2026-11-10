@@ -1,0 +1,955 @@
+{% extends 'core/base.html' %}
+{% block title %}DSP Bancada: Instrumentação de Laboratório | Lucenildo Silva Cerqueira, DSc.{% endblock %}
+{% block content %}
+<div class="section-header" style="margin-bottom: 22px;">
+  <h2>Estação DSP de Bancada: Instrumentação Industrial e Análise Espectral</h2>
+  <p>Instrumentação virtual em acabamento Platinum, controle tátil calibrado, visualização contínua com eixos métricos e espectrograma 3D estabilizado.</p>
+</div>
+
+<!-- CHASSI DE BANCADA COM TEMA CLARO PLATINUM INDUSTRIAL -->
+<div style="background: linear-gradient(180deg, #e4e7eb 0%, #d1d6dc 100%); border: 3px solid #b8bfc8; border-radius: 18px; padding: 22px; box-shadow: 10px 14px 28px rgba(0,0,0,0.25), inset 2px 2px 3px #ffffff, inset -2px -2px 3px rgba(0,0,0,0.2); color: #2d3748;">
+
+  <!-- BARRA SUPERIOR DE OPERAÇÕES E RUN/STOP -->
+  <div style="display: flex; justify-content: space-between; align-items: center; background-color: #f0f3f6; border: 1.5px solid #b8bfc8; border-radius: 12px; padding: 12px 18px; margin-bottom: 14px; flex-wrap: wrap; gap: 12px; box-shadow: inset 1px 1px 2px #fff;">
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <span id="led-run" class="lamp-led led-green"></span>
+      <span style="font-size: 0.85rem; font-weight: 800; color: #1a202c; font-family: monospace;">SISTEMA DAQ-2026 // AQUISIÇÃO CONTÍNUA (Fs = 1000 Hz)</span>
+    </div>
+
+    <!-- MODOS MATEMÁTICOS DOS SINAIS -->
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <span style="font-size: 0.74rem; color: #4a5568; font-weight: 700; text-transform: uppercase;">Modo de Saída:</span>
+      <button class="mode-btn active" data-mode="overlay">Sobreposição (1..N)</button>
+      <button class="mode-btn" data-mode="sum">Somação (Σ)</button>
+      <button class="mode-btn" data-mode="sub">Subtração (S₁ - S₂)</button>
+    </div>
+
+    <div style="display: flex; gap: 10px;">
+      <button id="btn-run" class="action-btn" style="background: #238636; color: #fff; border: 1px solid #1a6328;">RUN / STOP</button>
+    </div>
+  </div>
+
+  <!-- SUBMENU DE FILTRAGEM DIGITAL IIR -->
+  <div style="background-color: #e9edf1; border: 1.5px solid #b8bfc8; border-radius: 12px; padding: 10px 18px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+      <span style="font-size: 0.75rem; color: #2b6cb0; font-weight: 800; text-transform: uppercase;">Filtros Digitais:</span>
+      <button class="filter-btn active" data-filter="none">Sem Filtro (Bypass)</button>
+      <button class="filter-btn" data-filter="lowpass">Passa-Baixas</button>
+      <button class="filter-btn" data-filter="highpass">Passa-Altas</button>
+      <button class="filter-btn" data-filter="bandpass">Passa-Banda</button>
+      <button class="filter-btn" data-filter="notch">Notch 60Hz</button>
+    </div>
+
+    <div id="filter-cutoff-panel" style="display: flex; align-items: center; gap: 14px; font-size: 0.78rem;">
+      <div id="box-fc1" style="display: none; align-items: center; gap: 6px;">
+        <span style="color: #4a5568; font-weight: 700;">Corte (<span id="lbl-fc1">fc</span>):</span>
+        <input type="range" id="slider-fc1" min="2" max="50" step="1" value="15" style="width: 90px;">
+        <span id="txt-fc1" style="color: #2b6cb0; font-family: monospace; font-weight: 800;">15 Hz</span>
+      </div>
+      <div id="box-fc2" style="display: none; align-items: center; gap: 6px;">
+        <span style="color: #4a5568; font-weight: 700;">Corte Sup. (fc₂):</span>
+        <input type="range" id="slider-fc2" min="10" max="50" step="1" value="35" style="width: 90px;">
+        <span id="txt-fc2" style="color: #2b6cb0; font-family: monospace; font-weight: 800;">35 Hz</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 2.15fr 1.05fr; gap: 20px; align-items: start;">
+
+    <!-- TELAS DE VISUALIZAÇÃO COM EIXOS CALIBRADOS -->
+    <div style="display: flex; flex-direction: column; gap: 14px;">
+
+      <!-- EIXO 1: OSCILOSCÓPIO NO DOMÍNIO DO TEMPO COM EIXOS VISÍVEIS -->
+      <div style="background-color: #ffffff; border: 2px solid #a0aec0; border-radius: 12px; padding: 12px 14px 10px; position: relative; box-shadow: inset 1px 1px 3px rgba(0,0,0,0.1), 0 4px 6px rgba(0,0,0,0.05);">
+        <div style="display: flex; justify-content: space-between; font-family: monospace; font-size: 0.75rem; font-weight: 700; color: #2b6cb0; margin-bottom: 4px;">
+          <span>EIXO 1: OSCILOSCÓPIO [Tensão (V) vs Tempo (ms)]</span>
+          <span id="lbl-scope-vpp" style="color: #276749;">Vpp = 2.00 V</span>
+        </div>
+        <canvas id="scope-screen" width="700" height="190" style="width: 100%; height: 190px; display: block;"></canvas>
+      </div>
+
+      <!-- EIXO 2: FFT REAL CONTÍNUA COM ESCALA GRADUADA EM HZ -->
+      <div style="background-color: #ffffff; border: 2px solid #a0aec0; border-radius: 12px; padding: 12px 14px 10px; position: relative; box-shadow: inset 1px 1px 3px rgba(0,0,0,0.1), 0 4px 6px rgba(0,0,0,0.05);">
+        <div style="display: flex; justify-content: space-between; font-family: monospace; font-size: 0.75rem; font-weight: 700; color: #b7791f; margin-bottom: 4px;">
+          <span>EIXO 2: TRANSFORMADA DE FOURIER FFT [Magnitude (V) vs Frequência (Hz)]</span>
+          <span id="lbl-fft-peaks" style="color: #2f855a;">Pico: --</span>
+        </div>
+        <canvas id="scope-fft" width="700" height="135" style="width: 100%; height: 135px; display: block;"></canvas>
+      </div>
+
+      <!-- EIXO 3: ESPECTROGRAMA 3D ESTABILIZADO COM EIXOS ESTRUTURADOS -->
+      <div style="background-color: #ffffff; border: 2px solid #a0aec0; border-radius: 12px; padding: 12px 14px 10px; position: relative; box-shadow: inset 1px 1px 3px rgba(0,0,0,0.1), 0 4px 6px rgba(0,0,0,0.05);">
+        <div style="display: flex; justify-content: space-between; align-items: center; font-family: monospace; font-size: 0.75rem; font-weight: 700; margin-bottom: 6px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="color: #97266d;">EIXO 3: ESPECTROGRAMA 3D STFT</span>
+            <span style="color: #c53030;">X: Tempo</span> | 
+            <span style="color: #2b6cb0;">Z: Frequência (0-50 Hz)</span> | 
+            <span style="color: #276749;">Y: Potência</span>
+          </div>
+          
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <span style="color: #4a5568; font-size: 0.72rem;">Paleta:</span>
+            <select id="sel-colormap" style="padding: 2px 6px; background-color: #f7fafc; border: 1.5px solid #cbd5e0; color: #2d3748; border-radius: 6px; font-size: 0.72rem; font-weight: 700;">
+              <option value="spectral" selected>Spectral / Jet (Referência)</option>
+              <option value="turbo">Turbo Saturation</option>
+              <option value="viridis">Viridis Científico</option>
+              <option value="plasma">Plasma Neon</option>
+              <option value="inferno">Inferno Térmico</option>
+              <option value="emerald">Emerald Matrix</option>
+            </select>
+          </div>
+        </div>
+        <div id="stft-3d-container" style="width: 100%; height: 260px; border-radius: 8px; overflow: hidden; background-color: #f8fafc; border: 1px solid #cbd5e0;"></div>
+      </div>
+
+    </div>
+
+    <!-- COLUNA DA DIREITA: GERENCIADOR E PAINEL COM O LABVIEW ROTARY KNOB -->
+    <div style="display: flex; flex-direction: column; gap: 14px;">
+
+      <!-- GERENCIADOR DE SINAIS (ESTILO LABVIEW LISTBOX) -->
+      <div style="background: #f0f4f8; border: 2px solid #b8bfc8; border-radius: 14px; padding: 14px; box-shadow: 2px 3px 6px rgba(0,0,0,0.06);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <span style="font-size: 0.75rem; color: #2b6cb0; font-weight: 800; text-transform: uppercase;">Barramento de Sinais:</span>
+          <span style="font-size: 0.68rem; color: #718096;">(Clique dir: apagar)</span>
+        </div>
+
+        <div id="signal-listbox" class="labview-listbox"></div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 10px;">
+          <button id="btn-add-sig" class="push-btn-act" style="border-color: #2f855a; color: #276749;">+ Adicionar</button>
+          <button id="btn-del-sig" class="push-btn-act" style="border-color: #c53030; color: #9b2c2c;">✕ Remover</button>
+        </div>
+        <button id="btn-clear-all" class="push-btn-act" style="width: 100%; margin-top: 6px; color: #4a5568;">🗑 Limpar Todos</button>
+      </div>
+
+      <!-- PAINEL DE CONTROLE COM O LABVIEW ROTARY KNOB CALIBRADO 1:1 -->
+      <div id="editor-panel" style="background: #e2e8f0; border: 2px solid #cbd5e0; border-radius: 14px; padding: 16px; box-shadow: inset 1px 1px 2px #fff, 4px 6px 12px rgba(0,0,0,0.1); text-align: center;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+          <span style="font-size: 0.72rem; color: #2d3748; font-weight: 800; text-transform: uppercase;">Ajuste de Frequência:</span>
+          <span id="active-sig-badge" class="signal-badge" style="background-color: #2b6cb0; color: #fff;">SINAL S1</span>
+        </div>
+
+        <!-- MÓDULO DO KNOB LABVIEW COM VISOR FLUTUANTE AMARELO -->
+        <div style="position: relative; width: 190px; height: 190px; margin: 4px auto 6px;">
+          <canvas id="knob-canvas" width="190" height="190" style="cursor: grab; display: block;"></canvas>
+          <div id="knob-digital-display" class="labview-digital-box">5.00000</div>
+        </div>
+
+        <!-- BOTÕES PASSO-A-PASSO -->
+        <div style="display: flex; justify-content: center; gap: 6px; margin-bottom: 12px;">
+          <button id="btn-freq-down" class="step-btn-light">-1 Hz</button>
+          <button id="btn-freq-down5" class="step-btn-light">-5 Hz</button>
+          <button id="btn-freq-up" class="step-btn-light">+1 Hz</button>
+          <button id="btn-freq-up5" class="step-btn-light">+5 Hz</button>
+        </div>
+
+        <!-- FORMA DE ONDA DO SINAL SELECIONADO -->
+        <label style="font-size: 0.68rem; color: #2d3748; font-weight: 800; text-transform: uppercase; display: block; margin-bottom: 4px; text-align: left;">Forma de Onda:</label>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 12px;">
+          <button class="wave-opt-btn-light active" data-type="sine">Senoide</button>
+          <button class="wave-opt-btn-light" data-type="square">Quadrada</button>
+          <button class="wave-opt-btn-light" data-type="ecg">ECG Frank</button>
+          <button class="wave-opt-btn-light" data-type="emg">EMG Fadiga</button>
+        </div>
+
+        <!-- SLIDER DE AMPLITUDE -->
+        <div style="text-align: left;">
+          <div style="display: flex; justify-content: space-between; font-size: 0.72rem; margin-bottom: 2px; color: #2d3748; font-weight: 700;">
+            <span>Amplitude (V):</span>
+            <span id="txt-active-amp" style="color: #2b6cb0; font-family: monospace;">1.0x</span>
+          </div>
+          <input type="range" id="slider-active-amp" min="0.1" max="2.0" step="0.1" value="1.0" style="width: 100%;">
+        </div>
+      </div>
+
+      <!-- BASE DE TEMPO E RUÍDO 60HZ -->
+      <div style="background: #f0f4f8; border: 2px solid #b8bfc8; border-radius: 14px; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px;">
+        <div>
+          <div style="display: flex; justify-content: space-between; font-size: 0.72rem; margin-bottom: 2px; color: #4a5568; font-weight: 700;">
+            <span>TIME/DIV (Base de Tempo):</span>
+            <span id="txt-time" style="color: #2b6cb0; font-weight: 800;">50 ms</span>
+          </div>
+          <input type="range" id="slider-time" min="10" max="200" step="5" value="50" style="width: 100%;">
+        </div>
+        <div>
+          <div style="display: flex; justify-content: space-between; font-size: 0.72rem; margin-bottom: 2px; color: #4a5568; font-weight: 700;">
+            <span>Ruído de Rede 60Hz:</span>
+            <span id="txt-noise" style="color: #c53030; font-weight: 800;">0 %</span>
+          </div>
+          <input type="range" id="slider-noise" min="0" max="1" step="0.05" value="0" style="width: 100%;">
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<style>
+  .lamp-led { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
+  .led-green { background-color: #38a169; box-shadow: 0 0 6px #38a169; }
+  .led-off { background-color: #a0aec0; box-shadow: none; }
+
+  .mode-btn, .filter-btn {
+    padding: 6px 12px; font-size: 0.75rem; font-weight: 700; border-radius: 6px; cursor: pointer;
+    background: #edf2f7; border: 1px solid #cbd5e0; color: #4a5568;
+    transition: all 0.2s ease;
+  }
+  .mode-btn:hover, .filter-btn:hover { background: #e2e8f0; color: #1a202c; }
+  .mode-btn.active, .filter-btn.active {
+    background: #2b6cb0; border-color: #2b6cb0; color: #ffffff;
+  }
+
+  .action-btn {
+    padding: 6px 14px; font-size: 0.76rem; font-weight: 800; border-radius: 6px; cursor: pointer;
+  }
+
+  .labview-listbox {
+    background: #ffffff; border: 1.5px solid #cbd5e0; border-radius: 8px;
+    height: 125px; overflow-y: auto; padding: 4px; display: flex; flex-direction: column; gap: 3px;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+  }
+  .listbox-item {
+    display: flex; justify-content: space-between; align-items: center; padding: 6px 10px;
+    border-radius: 6px; cursor: pointer; font-family: monospace; font-size: 0.75rem; color: #4a5568;
+    transition: all 0.15s ease; user-select: none;
+  }
+  .listbox-item:hover { background-color: #edf2f7; }
+  .listbox-item.selected {
+    background: #e2e8f0; border: 1.5px solid #2b6cb0; color: #1a202c; font-weight: 800;
+  }
+
+  .push-btn-act {
+    padding: 7px; font-size: 0.75rem; font-weight: 800; background: #ffffff; border: 1.5px solid #cbd5e0;
+    border-radius: 6px; cursor: pointer; transition: all 0.2s ease;
+  }
+  .push-btn-act:hover { background: #edf2f7; }
+
+  /* CAIXA DIGITAL FLUTUANTE AMARELA CALIBRADA EM HZ */
+  .labview-digital-box {
+    position: absolute; top: 46%; left: 52%; transform: translate(0, -50%);
+    background-color: #fef08a; border: 1.5px solid #000;
+    padding: 2px 6px; font-family: monospace; font-size: 0.78rem; font-weight: 800; color: #000;
+    box-shadow: 2px 2px 4px rgba(0,0,0,0.25); pointer-events: none; z-index: 10;
+  }
+
+  .step-btn-light {
+    padding: 5px 9px; font-size: 0.72rem; font-weight: 800; background: #ffffff; border: 1px solid #cbd5e0;
+    border-radius: 4px; color: #2d3748; cursor: pointer; box-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+  }
+  .step-btn-light:hover { background: #edf2f7; }
+
+  .wave-opt-btn-light {
+    padding: 6px; font-size: 0.72rem; font-weight: 700; background: #ffffff; border: 1px solid #cbd5e0;
+    border-radius: 6px; color: #4a5568; cursor: pointer; transition: all 0.15s ease;
+  }
+  .wave-opt-btn-light.active {
+    border-color: #2b6cb0; color: #fff; background: #2b6cb0;
+  }
+
+  .signal-badge { font-family: monospace; font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 4px; }
+</style>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+<script>
+  let isRunning = true;
+  let operationalMode = 'overlay';
+  let activeFilter = 'none';
+  let fc1 = 15;
+  let fc2 = 35;
+  let timeDiv = 50;
+  let voltDiv = 1.0;
+  let noiseLevel = 0;
+  let phase = 0;
+  let selectedSignalIndex = 0;
+  let currentColormap = 'spectral';
+
+  const channelColors = ['#0969da', '#cf222e', '#1a7f37', '#b08800', '#8250df', '#1f883d', '#bf3989'];
+
+  let signals = [
+    { id: 1, type: 'sine', freq: 5.0, amp: 1.0, color: channelColors[0] },
+    { id: 2, type: 'sine', freq: 15.0, amp: 0.7, color: channelColors[1] }
+  ];
+
+  const canvasScope = document.getElementById('scope-screen');
+  const ctxScope = canvasScope.getContext('2d');
+  const canvasFFT = document.getElementById('scope-fft');
+  const ctxFFT = canvasFFT.getContext('2d');
+  const knobCanvas = document.getElementById('knob-canvas');
+  const ctxKnob = knobCanvas.getContext('2d');
+  const knobDigitalDisplay = document.getElementById('knob-digital-display');
+
+  const listbox = document.getElementById('signal-listbox');
+  const activeSigBadge = document.getElementById('active-sig-badge');
+  const txtActiveAmp = document.getElementById('txt-active-amp');
+  const sliderActiveAmp = document.getElementById('slider-active-amp');
+
+  // ========================================================
+  // RENDER DO KNOB LABVIEW CALIBRADO DIRETAMENTE DE 0 A 50 HZ
+  // ========================================================
+  function drawLabviewKnob(freqVal) {
+    const w = knobCanvas.width;
+    const h = knobCanvas.height;
+    const cx = w / 2;
+    const cy = h / 2;
+    const rKnob = 58;
+
+    ctxKnob.clearRect(0, 0, w, h);
+
+    const minFreq = 0;
+    const maxFreq = 50;
+    const startAng = Math.PI * 0.75;
+    const sweepAng = Math.PI * 1.5;
+
+    ctxKnob.fillStyle = '#1a202c';
+    ctxKnob.font = 'bold 9px Arial, sans-serif';
+    ctxKnob.textAlign = 'center';
+    ctxKnob.textBaseline = 'middle';
+
+    // Escala radial externa graduada em Hz (0, 5, 10, ... 50 Hz)
+    for (let step = 0; step <= 10; step++) {
+      const val = step * 5;
+      const frac = step / 10;
+      const angle = startAng + frac * sweepAng;
+      const tickLen = 6;
+
+      const x1 = cx + (rKnob + 6) * Math.cos(angle);
+      const y1 = cy + (rKnob + 6) * Math.sin(angle);
+      const x2 = cx + (rKnob + 6 + tickLen) * Math.cos(angle);
+      const y2 = cy + (rKnob + 6 + tickLen) * Math.sin(angle);
+
+      ctxKnob.beginPath();
+      ctxKnob.moveTo(x1, y1);
+      ctxKnob.lineTo(x2, y2);
+      ctxKnob.strokeStyle = '#1a202c';
+      ctxKnob.lineWidth = 1.8;
+      ctxKnob.stroke();
+
+      const distLabel = rKnob + 18;
+      const lx = cx + distLabel * Math.cos(angle);
+      const ly = cy + distLabel * Math.sin(angle);
+      ctxKnob.fillText(val.toString(), lx, ly);
+    }
+
+    ctxKnob.font = 'bold 11px Arial, sans-serif';
+    
+
+    // Corpo metálico chanfrado
+    const gradBase = ctxKnob.createLinearGradient(cx - rKnob, cy - rKnob, cx + rKnob, cy + rKnob);
+    gradBase.addColorStop(0, '#ffffff');
+    gradBase.addColorStop(0.5, '#cbd5e0');
+    gradBase.addColorStop(1, '#718096');
+
+    ctxKnob.beginPath();
+    ctxKnob.arc(cx, cy, rKnob + 4, 0, Math.PI * 2);
+    ctxKnob.fillStyle = gradBase;
+    ctxKnob.fill();
+
+    // Esfera 3D central
+    const gradSphere = ctxKnob.createRadialGradient(cx - 16, cy - 18, 4, cx, cy, rKnob - 4);
+    gradSphere.addColorStop(0, '#ffffff');
+    gradSphere.addColorStop(0.35, '#edf2f7');
+    gradSphere.addColorStop(0.75, '#cbd5e0');
+    gradSphere.addColorStop(1, '#4a5568');
+
+    ctxKnob.beginPath();
+    ctxKnob.arc(cx, cy, rKnob - 4, 0, Math.PI * 2);
+    ctxKnob.fillStyle = gradSphere;
+    ctxKnob.fill();
+
+    // Covinha de rotação (Finger Indent)
+    const currentAngle = startAng + (Math.max(0, Math.min(50, freqVal)) / 50) * sweepAng;
+    const dimpleDist = 32;
+    const dimpleX = cx + dimpleDist * Math.cos(currentAngle);
+    const dimpleY = cy + dimpleDist * Math.sin(currentAngle);
+    const dimpleR = 14;
+
+    const gradDimple = ctxKnob.createRadialGradient(dimpleX + 3, dimpleY + 3, 2, dimpleX, dimpleY, dimpleR);
+    gradDimple.addColorStop(0, '#4a5568');
+    gradDimple.addColorStop(0.65, '#a0aec0');
+    gradDimple.addColorStop(0.95, '#f7fafc');
+    gradDimple.addColorStop(1, '#ffffff');
+
+    ctxKnob.beginPath();
+    ctxKnob.arc(dimpleX, dimpleY, dimpleR, 0, Math.PI * 2);
+    ctxKnob.fillStyle = gradDimple;
+    ctxKnob.fill();
+    ctxKnob.strokeStyle = 'rgba(0,0,0,0.3)';
+    ctxKnob.lineWidth = 1;
+    ctxKnob.stroke();
+
+    // Visor digital flutuante amarelo
+    knobDigitalDisplay.textContent = (freqVal).toFixed(2) + ' Hz';
+  }
+
+  let isDraggingKnob = false;
+  function updateKnobFromEvent(e) {
+    const rect = knobCanvas.getBoundingClientRect();
+    const x = e.clientX - rect.left - knobCanvas.width / 2;
+    const y = e.clientY - rect.top - knobCanvas.height / 2;
+    let angle = Math.atan2(y, x);
+
+    let normAngle = angle - Math.PI * 0.75;
+    while (normAngle < 0) normAngle += Math.PI * 2;
+    if (normAngle <= Math.PI * 1.5) {
+      const frac = normAngle / (Math.PI * 1.5);
+      const realFreq = Math.max(1, Math.min(50, Math.round(frac * 50 * 10) / 10));
+      signals[selectedSignalIndex].freq = realFreq;
+      updateListbox();
+      syncEditorPanel();
+    }
+  }
+
+  knobCanvas.addEventListener('mousedown', (e) => { isDraggingKnob = true; updateKnobFromEvent(e); });
+  window.addEventListener('mousemove', (e) => { if (isDraggingKnob) updateKnobFromEvent(e); });
+  window.addEventListener('mouseup', () => { isDraggingKnob = false; });
+
+  document.getElementById('btn-freq-down').addEventListener('click', () => {
+    signals[selectedSignalIndex].freq = Math.max(1, signals[selectedSignalIndex].freq - 1);
+    updateListbox(); syncEditorPanel();
+  });
+  document.getElementById('btn-freq-up').addEventListener('click', () => {
+    signals[selectedSignalIndex].freq = Math.min(50, signals[selectedSignalIndex].freq + 1);
+    updateListbox(); syncEditorPanel();
+  });
+  document.getElementById('btn-freq-down5').addEventListener('click', () => {
+    signals[selectedSignalIndex].freq = Math.max(1, signals[selectedSignalIndex].freq - 5);
+    updateListbox(); syncEditorPanel();
+  });
+  document.getElementById('btn-freq-up5').addEventListener('click', () => {
+    signals[selectedSignalIndex].freq = Math.min(50, signals[selectedSignalIndex].freq + 5);
+    updateListbox(); syncEditorPanel();
+  });
+
+  function updateListbox() {
+    listbox.innerHTML = '';
+    signals.forEach((sig, idx) => {
+      const item = document.createElement('div');
+      item.className = 'listbox-item' + (idx === selectedSignalIndex ? ' selected' : '');
+      item.innerHTML = `
+        <span style="display:flex; align-items:center; gap:6px;">
+          <span style="width:9px; height:9px; border-radius:50%; background-color:${sig.color};"></span>
+          S${sig.id}: ${sig.type.toUpperCase()}
+        </span>
+        <span style="color:${sig.color}; font-weight:800;">${sig.freq.toFixed(1)}Hz | ${sig.amp.toFixed(1)}V</span>
+      `;
+
+      item.addEventListener('click', () => {
+        selectedSignalIndex = idx;
+        updateListbox();
+        syncEditorPanel();
+      });
+
+      item.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        if (signals.length <= 1) {
+          alert('Mantenha pelo menos um sinal no barramento.');
+          return;
+        }
+        signals.splice(idx, 1);
+        if (selectedSignalIndex >= signals.length) selectedSignalIndex = signals.length - 1;
+        updateListbox();
+        syncEditorPanel();
+      });
+
+      listbox.appendChild(item);
+    });
+  }
+
+  function syncEditorPanel() {
+    const cur = signals[selectedSignalIndex];
+    if (!cur) return;
+    activeSigBadge.textContent = `SINAL S${cur.id}`;
+    activeSigBadge.style.color = '#fff';
+    activeSigBadge.style.backgroundColor = cur.color;
+
+    txtActiveAmp.textContent = `${cur.amp.toFixed(1)}x`;
+    sliderActiveAmp.value = cur.amp;
+
+    drawLabviewKnob(cur.freq);
+
+    document.querySelectorAll('.wave-opt-btn-light').forEach(b => {
+      b.classList.toggle('active', b.dataset.type === cur.type);
+    });
+  }
+
+  document.getElementById('btn-add-sig').addEventListener('click', () => {
+    if (signals.length >= 7) {
+      alert('Limite de 7 sinais atingido.');
+      return;
+    }
+    const nextId = signals.length + 1;
+    const nextColor = channelColors[(nextId - 1) % channelColors.length];
+    signals.push({ id: nextId, type: 'sine', freq: nextId * 5.0, amp: 0.8, color: nextColor });
+    selectedSignalIndex = signals.length - 1;
+    updateListbox();
+    syncEditorPanel();
+  });
+
+  document.getElementById('btn-del-sig').addEventListener('click', () => {
+    if (signals.length <= 1) {
+      alert('Mantenha pelo menos um sinal no barramento.');
+      return;
+    }
+    signals.splice(selectedSignalIndex, 1);
+    if (selectedSignalIndex >= signals.length) selectedSignalIndex = signals.length - 1;
+    updateListbox();
+    syncEditorPanel();
+  });
+
+  document.getElementById('btn-clear-all').addEventListener('click', () => {
+    signals = [{ id: 1, type: 'sine', freq: 5.0, amp: 1.0, color: channelColors[0] }];
+    selectedSignalIndex = 0;
+    updateListbox();
+    syncEditorPanel();
+  });
+
+  sliderActiveAmp.addEventListener('input', (e) => {
+    signals[selectedSignalIndex].amp = parseFloat(e.target.value);
+    txtActiveAmp.textContent = `${parseFloat(e.target.value).toFixed(1)}x`;
+    updateListbox();
+  });
+
+  document.querySelectorAll('.wave-opt-btn-light').forEach(btn => {
+    btn.addEventListener('click', () => {
+      signals[selectedSignalIndex].type = btn.dataset.type;
+      syncEditorPanel();
+      updateListbox();
+    });
+  });
+
+  // SUBMENU DE FILTROS DIGITAIS
+  const boxFc1 = document.getElementById('box-fc1');
+  const boxFc2 = document.getElementById('box-fc2');
+  const sliderFc1 = document.getElementById('slider-fc1');
+  const sliderFc2 = document.getElementById('slider-fc2');
+  const txtFc1 = document.getElementById('txt-fc1');
+  const txtFc2 = document.getElementById('txt-fc2');
+  const lblFc1 = document.getElementById('lbl-fc1');
+  const lblScopeFilter = document.getElementById('lbl-scope-filter');
+
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeFilter = btn.dataset.filter;
+      boxFc1.style.display = 'none';
+      boxFc2.style.display = 'none';
+
+      if (activeFilter === 'lowpass') {
+        boxFc1.style.display = 'flex';
+        lblFc1.textContent = 'fc';
+        lblScopeFilter.textContent = `FILTRO: PASSA-BAIXAS (${fc1} Hz)`;
+      } else if (activeFilter === 'highpass') {
+        boxFc1.style.display = 'flex';
+        lblFc1.textContent = 'fc';
+        lblScopeFilter.textContent = `FILTRO: PASSA-ALTAS (${fc1} Hz)`;
+      } else if (activeFilter === 'bandpass') {
+        boxFc1.style.display = 'flex';
+        boxFc2.style.display = 'flex';
+        lblFc1.textContent = 'fc₁';
+        lblScopeFilter.textContent = `FILTRO: PASSA-BANDA (${fc1} - ${fc2} Hz)`;
+      } else if (activeFilter === 'notch') {
+        lblScopeFilter.textContent = 'FILTRO: NOTCH 60Hz';
+      } else {
+        lblScopeFilter.textContent = 'FILTRO: BYPASS';
+      }
+    });
+  });
+
+  sliderFc1.addEventListener('input', (e) => {
+    fc1 = parseInt(e.target.value);
+    txtFc1.textContent = fc1 + ' Hz';
+  });
+  sliderFc2.addEventListener('input', (e) => {
+    fc2 = parseInt(e.target.value);
+    txtFc2.textContent = fc2 + ' Hz';
+  });
+
+  function getFilterGain(f) {
+    if (activeFilter === 'none') return 1.0;
+    if (activeFilter === 'lowpass') return 1 / Math.sqrt(1 + Math.pow(f / fc1, 6));
+    if (activeFilter === 'highpass') return 1 / Math.sqrt(1 + Math.pow(fc1 / (f + 0.001), 6));
+    if (activeFilter === 'bandpass') {
+      const gLow = 1 / Math.sqrt(1 + Math.pow(f / fc2, 6));
+      const gHigh = 1 / Math.sqrt(1 + Math.pow(fc1 / (f + 0.001), 6));
+      return gLow * gHigh;
+    }
+    if (activeFilter === 'notch') return Math.abs(f - 60) < 3 ? 0.05 : 1.0;
+    return 1.0;
+  }
+
+  document.querySelectorAll('.mode-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      operationalMode = btn.dataset.mode;
+    });
+  });
+
+  document.getElementById('slider-time').addEventListener('input', (e) => {
+    timeDiv = parseFloat(e.target.value);
+    document.getElementById('txt-time').textContent = Math.round(timeDiv) + ' ms';
+  });
+
+  document.getElementById('slider-noise').addEventListener('input', (e) => {
+    noiseLevel = parseFloat(e.target.value);
+    document.getElementById('txt-noise').textContent = Math.round(noiseLevel * 100) + ' %';
+  });
+
+  const btnRun = document.getElementById('btn-run');
+  const ledRun = document.getElementById('led-run');
+  btnRun.addEventListener('click', () => {
+    isRunning = !isRunning;
+    ledRun.className = isRunning ? 'lamp-led led-green' : 'lamp-led led-off';
+    btnRun.style.background = isRunning ? '#238636' : '#c53030';
+  });
+
+  function getRawSignalSample(sig, t) {
+    let s = 0;
+    if (sig.type === 'sine') s = Math.sin(2 * Math.PI * sig.freq * t);
+    else if (sig.type === 'square') s = Math.sin(2 * Math.PI * sig.freq * t) >= 0 ? 1 : -1;
+    else if (sig.type === 'ecg') {
+      const p = 1.0 / (sig.freq * 0.25);
+      const mod = t % p;
+      if (mod < 0.08) s = Math.sin((mod / 0.08) * Math.PI) * 0.25;
+      else if (mod >= 0.12 && mod < 0.16) s = -Math.sin(((mod - 0.12)/0.04)*Math.PI) * 0.35;
+      else if (mod >= 0.16 && mod < 0.22) s = Math.sin(((mod - 0.16)/0.06)*Math.PI) * 1.8;
+      else if (mod >= 0.22 && mod < 0.26) s = -Math.sin(((mod - 0.22)/0.04)*Math.PI) * 0.45;
+      else if (mod >= 0.32 && mod < 0.44) s = Math.sin(((mod - 0.32)/0.12)*Math.PI) * 0.4;
+    } else if (sig.type === 'emg') {
+      s = (Math.random() * 2 - 1) * Math.sin(2 * Math.PI * sig.freq * t);
+    }
+    return s * sig.amp;
+  }
+
+  // ====================================================================
+  // ESPECTROGRAMA 3D ESTABILIZADO COM EIXOS VISÍVEIS (THREE.JS)
+  // ====================================================================
+  const stftContainer = document.getElementById('stft-3d-container');
+  const scene3D = new THREE.Scene();
+  scene3D.background = new THREE.Color(0xf1f5f9);
+
+  const camera3D = new THREE.PerspectiveCamera(40, stftContainer.clientWidth / stftContainer.clientHeight, 0.1, 1000);
+  camera3D.position.set(34, 28, 38);
+
+  const renderer3D = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer3D.setSize(stftContainer.clientWidth, stftContainer.clientHeight);
+  renderer3D.setPixelRatio(window.devicePixelRatio);
+  stftContainer.appendChild(renderer3D.domElement);
+
+  const controls3D = new THREE.OrbitControls(camera3D, renderer3D.domElement);
+  controls3D.enableDamping = true;
+  controls3D.dampingFactor = 0.05;
+
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.95);
+  scene3D.add(ambientLight);
+  const dirLight = new THREE.DirectionalLight(0xffffff, 0.7);
+  dirLight.position.set(20, 40, 20);
+  scene3D.add(dirLight);
+
+  // CAIXA DELIMITADORA CÚBICA METÁLICA DE ALTA VISIBILIDADE
+  const boxWidth = 30;
+  const boxHeight = 15;
+  const boxDepth = 22;
+
+  const boxGeo = new THREE.BoxGeometry(boxWidth, boxHeight, boxDepth);
+  const boxEdges = new THREE.EdgesGeometry(boxGeo);
+  const boxLines = new THREE.LineSegments(boxEdges, new THREE.LineBasicMaterial({ color: 0x475569, linewidth: 2 }));
+  boxLines.position.set(0, boxHeight / 2, 0);
+  scene3D.add(boxLines);
+
+  // Eixos cartesianos coloridos (X: Vermelho/Tempo, Y: Verde/Potência, Z: Azul/Frequência)
+  const axes3D = new THREE.AxesHelper(20);
+  axes3D.position.set(-boxWidth / 2, 0.1, boxDepth / 2);
+  scene3D.add(axes3D);
+
+  // Grade no chão com linhas cinzas
+  const floorGrid = new THREE.GridHelper(boxWidth, 15, 0x64748b, 0xcbd5e1);
+  floorGrid.position.set(0, 0.08, 0);
+  scene3D.add(floorGrid);
+
+  // Superfície plana de base
+  const floorGeo = new THREE.PlaneGeometry(boxWidth, boxDepth);
+  floorGeo.rotateX(-Math.PI / 2);
+  const floorMat = new THREE.MeshBasicMaterial({ color: 0xe2e8f0 });
+  const floorMesh = new THREE.Mesh(floorGeo, floorMat);
+  floorMesh.position.y = 0.05;
+  scene3D.add(floorMesh);
+
+  // Grade vertical traseira para leitura de amplitude
+  const backGrid = new THREE.GridHelper(boxDepth, 10, 0x94a3b8, 0xe2e8f0);
+  backGrid.rotateX(Math.PI / 2);
+  backGrid.position.set(-boxWidth / 2, boxHeight / 2, 0);
+  scene3D.add(backGrid);
+
+  // SUPERFÍCIE 3D SÓLIDA DO ESPECTROGRAMA
+  const gridX = 42; // Fatias no tempo
+  const gridZ = 30; // Frequências
+  const surfaceGeo = new THREE.PlaneGeometry(boxWidth, boxDepth, gridX - 1, gridZ - 1);
+  surfaceGeo.rotateX(-Math.PI / 2);
+
+  const posCount = surfaceGeo.attributes.position.count;
+  surfaceGeo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(posCount * 3), 3));
+
+  const surfaceMat = new THREE.MeshLambertMaterial({
+    vertexColors: true,
+    side: THREE.DoubleSide,
+    flatShading: false
+  });
+  const surfaceMesh = new THREE.Mesh(surfaceGeo, surfaceMat);
+  scene3D.add(surfaceMesh);
+
+  function getColorFromColormap(val, mapName) {
+    const v = Math.max(0, Math.min(1, val));
+    const c = new THREE.Color();
+
+    if (mapName === 'spectral') {
+      if (v < 0.15) c.setRGB(0.5 + 0.3 * (v / 0.15), 0.0, 0.8);
+      else if (v < 0.35) { const t = (v - 0.15) / 0.2; c.setRGB(0.0, t * 0.8, 1.0); }
+      else if (v < 0.6) { const t = (v - 0.35) / 0.25; c.setRGB(0.0, 1.0, 1.0 - t); }
+      else if (v < 0.8) { const t = (v - 0.6) / 0.2; c.setRGB(t, 1.0, 0.0); }
+      else { const t = (v - 0.8) / 0.2; c.setRGB(1.0, 1.0 - t * 0.8, 0.0); }
+    } else if (mapName === 'turbo') {
+      c.setHSL(0.75 - v * 0.75, 1.0, 0.5);
+    } else if (mapName === 'viridis') {
+      c.setRGB(0.26 + 0.7 * v, 0.1 + 0.8 * v, 0.4 - 0.2 * v);
+    } else if (mapName === 'plasma') {
+      c.setRGB(0.05 + 0.9 * v, 0.05 + 0.6 * v * v, 0.5 + 0.4 * (1 - v));
+    } else if (mapName === 'inferno') {
+      c.setRGB(0.1 + 0.9 * v, 0.0 + 0.8 * v * v, 0.2 * (1 - v));
+    } else if (mapName === 'emerald') {
+      c.setRGB(0.05, 0.3 + 0.7 * v, 0.2 + 0.5 * v);
+    }
+    return c;
+  }
+
+  document.getElementById('sel-colormap').addEventListener('change', (e) => {
+    currentColormap = e.target.value;
+  });
+
+  const historyMatrix = Array.from({ length: gridX }, () => new Float32Array(gridZ));
+
+  // ==========================================
+  // LOOP PRINCIPAL DE RENDERIZAÇÃO
+  // ==========================================
+  function renderAll() {
+    if (isRunning) phase += 0.007;
+
+    const N = canvasScope.width;
+    const totalTime = (10 * timeDiv) / 1000;
+    const midY = canvasScope.height / 2;
+    const divY = canvasScope.height / 8;
+    const pxPerVolt = divY / voltDiv;
+
+    // 1. TELA TEMPORAL (OSCILOSCÓPIO CLARO COM EIXOS VISÍVEIS)
+    ctxScope.fillStyle = '#f8fafc';
+    ctxScope.fillRect(0, 0, canvasScope.width, canvasScope.height);
+
+    const divX = canvasScope.width / 10;
+    ctxScope.strokeStyle = '#e2e8f0';
+    ctxScope.lineWidth = 1;
+    for (let x = 0; x <= canvasScope.width; x += divX) {
+      ctxScope.beginPath(); ctxScope.moveTo(x, 0); ctxScope.lineTo(x, canvasScope.height); ctxScope.stroke();
+    }
+    for (let y = 0; y <= canvasScope.height; y += divY) {
+      ctxScope.beginPath(); ctxScope.moveTo(0, y); ctxScope.lineTo(canvasScope.width, y); ctxScope.stroke();
+    }
+
+    // Linha de zero volts em destaque
+    ctxScope.strokeStyle = '#cbd5e1';
+    ctxScope.lineWidth = 1.5;
+    ctxScope.setLineDash([3, 3]);
+    ctxScope.beginPath(); ctxScope.moveTo(0, midY); ctxScope.lineTo(canvasScope.width, midY); ctxScope.stroke();
+    ctxScope.setLineDash([]);
+
+    // Rótulos dos eixos de tempo e voltagem visíveis
+    ctxScope.fillStyle = '#64748b';
+    ctxScope.font = 'bold 9px monospace';
+    ctxScope.fillText('0V', 4, midY - 3);
+    ctxScope.fillText('+1V', 4, midY - pxPerVolt + 9);
+    ctxScope.fillText('-1V', 4, midY + pxPerVolt - 3);
+
+    for (let i = 1; i <= 9; i++) {
+      const tMs = Math.round((i / 10) * totalTime * 1000);
+      ctxScope.fillText(`${tMs}ms`, i * divX - 12, canvasScope.height - 4);
+    }
+
+    if (operationalMode === 'overlay') {
+      signals.forEach(sig => {
+        const gain = getFilterGain(sig.freq);
+        ctxScope.strokeStyle = sig.color;
+        ctxScope.lineWidth = 2.2;
+        ctxScope.beginPath();
+
+        for (let x = 0; x < N; x++) {
+          const t = phase + (x / N) * totalTime;
+          let v = getRawSignalSample(sig, t) * gain;
+          if (noiseLevel > 0) {
+            v += noiseLevel * getFilterGain(60) * 0.5 * Math.sin(2 * Math.PI * 60 * t);
+          }
+          const y = midY - v * pxPerVolt;
+          if (x === 0) ctxScope.moveTo(x, y);
+          else ctxScope.lineTo(x, y);
+        }
+        ctxScope.stroke();
+      });
+    } else {
+      ctxScope.strokeStyle = operationalMode === 'sum' ? '#0969da' : '#cf222e';
+      ctxScope.lineWidth = 2.6;
+      ctxScope.beginPath();
+
+      let minV = 999, maxV = -999;
+      for (let x = 0; x < N; x++) {
+        const t = phase + (x / N) * totalTime;
+        let v = 0;
+        if (operationalMode === 'sum') {
+          signals.forEach(sig => { v += getRawSignalSample(sig, t) * getFilterGain(sig.freq); });
+        } else {
+          v = getRawSignalSample(signals[0], t) * getFilterGain(signals[0].freq) - 
+              (signals[1] ? getRawSignalSample(signals[1], t) * getFilterGain(signals[1].freq) : 0);
+        }
+        if (noiseLevel > 0) {
+          v += noiseLevel * getFilterGain(60) * 0.5 * Math.sin(2 * Math.PI * 60 * t);
+        }
+        if (v < minV) minV = v;
+        if (v > maxV) maxV = v;
+
+        const y = midY - v * pxPerVolt;
+        if (x === 0) ctxScope.moveTo(x, y);
+        else ctxScope.lineTo(x, y);
+      }
+      ctxScope.stroke();
+
+      const vpp = (maxV - minV) * voltDiv;
+      document.getElementById('lbl-scope-vpp').textContent = `Vpp = ${vpp.toFixed(2)} V`;
+    }
+
+    // 2. FFT REAL COM EIXO HORIZONTAL GRADUADO EM HZ
+    ctxFFT.fillStyle = '#f8fafc';
+    ctxFFT.fillRect(0, 0, canvasFFT.width, canvasFFT.height);
+
+    const maxF = 50;
+    const fftPoints = canvasFFT.width;
+    let maxSpectrumVal = 0;
+    let peakFreq = 0;
+
+    // Retículo FFT
+    ctxFFT.strokeStyle = '#e2e8f0';
+    for (let f = 0; f <= maxF; f += 5) {
+      const x = (f / maxF) * canvasFFT.width;
+      ctxFFT.beginPath(); ctxFFT.moveTo(x, 0); ctxFFT.lineTo(x, canvasFFT.height - 18); ctxFFT.stroke();
+
+      // Rótulos do eixo de frequência bem visíveis
+      ctxFFT.fillStyle = '#64748b';
+      ctxFFT.font = 'bold 9px monospace';
+      ctxFFT.textAlign = 'center';
+      ctxFFT.fillText(`${f}Hz`, x, canvasFFT.height - 4);
+    }
+
+    // Curva espectral contínua
+    ctxFFT.lineWidth = 2.4;
+    ctxFFT.strokeStyle = '#b7791f';
+    ctxFFT.beginPath();
+
+    for (let i = 0; i < fftPoints; i++) {
+      const f = (i / fftPoints) * maxF;
+      let mag = 0.02;
+
+      signals.forEach(sig => {
+        const gain = getFilterGain(sig.freq);
+        const bw = 1.0;
+        mag += (sig.amp * gain) / (1 + Math.pow((f - sig.freq) / bw, 2));
+
+        if (sig.type === 'square') {
+          for (let h = 3; h <= 7; h += 2) {
+            mag += (sig.amp * getFilterGain(sig.freq * h) / h) / (1 + Math.pow((f - (sig.freq * h)) / (bw * 1.2), 2));
+          }
+        }
+      });
+
+      if (noiseLevel > 0) {
+        mag += (noiseLevel * getFilterGain(60) * 0.9) / (1 + Math.pow((f - 60) / 1.0, 2));
+      }
+
+      if (mag > maxSpectrumVal) {
+        maxSpectrumVal = mag;
+        peakFreq = f;
+      }
+
+      const y = (canvasFFT.height - 20) - Math.min(canvasFFT.height - 25, mag * (canvasFFT.height - 35));
+      if (i === 0) ctxFFT.moveTo(i, y);
+      else ctxFFT.lineTo(i, y);
+    }
+    ctxFFT.stroke();
+
+    ctxFFT.lineTo(canvasFFT.width, canvasFFT.height - 20);
+    ctxFFT.lineTo(0, canvasFFT.height - 20);
+    ctxFFT.fillStyle = 'rgba(183, 121, 31, 0.12)';
+    ctxFFT.fill();
+
+    document.getElementById('lbl-fft-peaks').textContent = `Pico Dominante: ${peakFreq.toFixed(1)} Hz (${maxSpectrumVal.toFixed(2)} V)`;
+
+    // 3. ATUALIZAÇÃO DA SUPERFÍCIE 3D ESTABILIZADA (STFT)
+    for (let x = gridX - 1; x > 0; x--) {
+      historyMatrix[x].set(historyMatrix[x - 1]);
+    }
+
+    for (let z = 0; z < gridZ; z++) {
+      const f = (z / gridZ) * maxF;
+      let power = 0.04;
+      signals.forEach(sig => {
+        const gain = getFilterGain(sig.freq);
+        if (Math.abs(f - sig.freq) < 2.0) {
+          power += sig.amp * gain * 1.6;
+        }
+      });
+      if (noiseLevel > 0 && Math.abs(f - 60) < 2.0) {
+        power += noiseLevel * getFilterGain(60) * 1.2;
+      }
+      historyMatrix[0][z] = power;
+    }
+
+    const positions = surfaceGeo.attributes.position.array;
+    const colors = surfaceGeo.attributes.color.array;
+
+    for (let i = 0; i < gridZ; i++) {
+      for (let j = 0; j < gridX; j++) {
+        const index = (i * gridX + j) * 3;
+        const val = historyMatrix[j][i];
+        
+        // Relevo volumétrico suave e perfeitamente contido na caixa
+        positions[index + 1] = Math.min(14.0, val * 4.2);
+
+        const color = getColorFromColormap(val / 2.0, currentColormap);
+        colors[index] = color.r;
+        colors[index + 1] = color.g;
+        colors[index + 2] = color.b;
+      }
+    }
+
+    surfaceGeo.attributes.position.needsUpdate = true;
+    surfaceGeo.attributes.color.needsUpdate = true;
+    surfaceGeo.computeVertexNormals();
+
+    controls3D.update();
+    renderer3D.render(scene3D, camera3D);
+
+    requestAnimationFrame(renderAll);
+  }
+
+  window.addEventListener('resize', () => {
+    if (!stftContainer) return;
+    camera3D.aspect = stftContainer.clientWidth / stftContainer.clientHeight;
+    camera3D.updateProjectionMatrix();
+    renderer3D.setSize(stftContainer.clientWidth, stftContainer.clientHeight);
+  });
+
+  updateListbox();
+  syncEditorPanel();
+  renderAll();
+</script>
+{% endblock %}

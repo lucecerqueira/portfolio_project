@@ -3,5 +3,6 @@ gunicorn
 whitenoise
 numpy
 scipy
+scikit-learn
 biopython
 requests

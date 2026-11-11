@@ -89,3 +89,28 @@ LOGIN_URL = "login"
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
+
+# --- Configuracao de Dominios de Producao (Render, Railway e Registro.br) ---
+ALLOWED_HOSTS = [
+    '127.0.0.1',
+    'localhost',
+    'lucenildo.com.br',
+    'www.lucenildo.com.br',
+    'lab.lucenildo.com.br',
+    'lucenildocerqueira.com.br',
+    'www.lucenildocerqueira.com.br',
+    '.onrender.com',
+    '.up.railway.app',
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://lucenildo.com.br',
+    'https://www.lucenildo.com.br',
+    'https://lab.lucenildo.com.br',
+    'https://lucenildocerqueira.com.br',
+    'https://www.lucenildocerqueira.com.br',
+    'https://*.onrender.com',
+    'https://*.up.railway.app',
+]
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')

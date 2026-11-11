@@ -18,4 +18,7 @@ urlpatterns = [
     path('laboratorio/vcg-3d/', views.lab_vcg, name='lab_vcg'),
     path('laboratorio/duckdb-wasm/', views.lab_pubmed, name='lab_duckdb'),
     path('api/pubmed-search/', views.pubmed_search_api, name='pubmed_search_api'),
+    path('stroop/', views.stroop_test_view, name='stroop_test'),
+    path('stroop/submit/', views.stroop_submit_trial, name='stroop_submit'),
+    path('stroop/analytics/', views.stroop_analytics_view, name='stroop_analytics'),
 ]

@@ -9,15 +9,46 @@
 <!-- CHASSI DE BANCADA COM TEMA CLARO PLATINUM INDUSTRIAL -->
 <div style="background: linear-gradient(180deg, #e4e7eb 0%, #d1d6dc 100%); border: 3px solid #b8bfc8; border-radius: 18px; padding: 22px; box-shadow: 10px 14px 28px rgba(0,0,0,0.25), inset 2px 2px 3px #ffffff, inset -2px -2px 3px rgba(0,0,0,0.2); color: #2d3748;">
 
-  <!-- BARRA SUPERIOR DE OPERAÇÕES E RUN/STOP -->
+  <!-- BARRA SUPERIOR DE OPERAÇÕES, CHAVE NYQUIST (Fs + DIGITAÇÃO LIVRE) E RUN/STOP -->
   <div style="display: flex; justify-content: space-between; align-items: center; background-color: #f0f3f6; border: 1.5px solid #b8bfc8; border-radius: 12px; padding: 12px 18px; margin-bottom: 14px; flex-wrap: wrap; gap: 12px; box-shadow: inset 1px 1px 2px #fff;">
-    <div style="display: flex; align-items: center; gap: 12px;">
+    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
       <span id="led-run" class="lamp-led led-green"></span>
-      <span style="font-size: 0.85rem; font-weight: 800; color: #1a202c; font-family: monospace;">SISTEMA DAQ-2026 // AQUISIÇÃO CONTÍNUA (Fs = 1000 Hz)</span>
+      <span style="font-size: 0.85rem; font-weight: 800; color: #1a202c; font-family: monospace;">SISTEMA DAQ-2026 //</span>
+
+      <!-- CONTROLE HÍBRIDO DE AMOSTRAGEM: PRESETS + ENTRADA MANUAL LIVRE -->
+      <div style="display: inline-flex; align-items: center; background: #e2e8f0; padding: 4px 10px; border-radius: 8px; border: 1.5px solid #a0aec0; gap: 6px; box-shadow: inset 1px 1px 2px rgba(0,0,0,0.08); flex-wrap: wrap;">
+        <label for="input-fs-custom" style="font-family: monospace; font-size: 0.78rem; font-weight: 800; color: #2d3748; margin: 0;">Fs =</label>
+        
+        <!-- Campo para digitar qualquer frequência -->
+        <div style="display: inline-flex; align-items: center; background: #ffffff; border: 1.5px solid #2b6cb0; border-radius: 6px; padding: 1px 6px;">
+          <input type="number" id="input-fs-custom" min="1" max="5000" step="0.5" value="1000"
+                 title="Digite qualquer frequência de amostragem em Hz"
+                 style="width: 68px; border: none; outline: none; font-family: monospace; font-size: 0.84rem; font-weight: 800; color: #1d4ed8; text-align: right; background: transparent;">
+          <span style="font-family: monospace; font-size: 0.76rem; font-weight: 800; color: #4a5568; margin-left: 3px;">Hz</span>
+        </div>
+
+        <!-- Seletor rápido de presets -->
+        <select id="select-fs" title="Escolher frequência predefinida"
+                style="font-family: monospace; font-size: 0.78rem; font-weight: 700; color: #2d3748; background: #f8fafc; border: 1px solid #cbd5e0; border-radius: 6px; padding: 3px 6px; cursor: pointer;">
+          <option value="custom" style="display:none;">Personalizado</option>
+          <option value="1000" selected>Preset: 1000 Hz</option>
+          <option value="250">Preset: 250 Hz</option>
+          <option value="100">Preset: 100 Hz (fN=50)</option>
+          <option value="60">Preset: 60 Hz (fN=30)</option>
+          <option value="40">Preset: 40 Hz (fN=20)</option>
+          <option value="25">Preset: 25 Hz (fN=12,5)</option>
+          <option value="15">Preset: 15 Hz (Aliasing)</option>
+        </select>
+      </div>
+
+      <!-- VISOR DE STATUS DE NYQUIST / ALERTA DE ALIASING -->
+      <span id="nyquist-status-badge" style="font-family: monospace; font-size: 0.75rem; font-weight: 800; padding: 4px 10px; border-radius: 999px; background: #dcfce7; color: #166534; border: 1px solid #86efac;">
+        ✓ Nyquist (fN = 500,0 Hz) • Sem Aliasing
+      </span>
     </div>
 
     <!-- MODOS MATEMÁTICOS DOS SINAIS -->
-    <div style="display: flex; align-items: center; gap: 8px;">
+    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
       <span style="font-size: 0.74rem; color: #4a5568; font-weight: 700; text-transform: uppercase;">Modo de Saída:</span>
       <button class="mode-btn active" data-mode="overlay">Sobreposição (1..N)</button>
       <button class="mode-btn" data-mode="sum">Somação (Σ)</button>
@@ -38,6 +69,7 @@
       <button class="filter-btn" data-filter="highpass">Passa-Altas</button>
       <button class="filter-btn" data-filter="bandpass">Passa-Banda</button>
       <button class="filter-btn" data-filter="notch">Notch 60Hz</button>
+      <span id="lbl-scope-filter" style="font-family: monospace; font-size: 0.74rem; font-weight: 800; color: #4a5568; margin-left: 6px;">FILTRO: BYPASS</span>
     </div>
 
     <div id="filter-cutoff-panel" style="display: flex; align-items: center; gap: 14px; font-size: 0.78rem;">
@@ -61,8 +93,9 @@
 
       <!-- EIXO 1: OSCILOSCÓPIO NO DOMÍNIO DO TEMPO COM EIXOS VISÍVEIS -->
       <div style="background-color: #ffffff; border: 2px solid #a0aec0; border-radius: 12px; padding: 12px 14px 10px; position: relative; box-shadow: inset 1px 1px 3px rgba(0,0,0,0.1), 0 4px 6px rgba(0,0,0,0.05);">
-        <div style="display: flex; justify-content: space-between; font-family: monospace; font-size: 0.75rem; font-weight: 700; color: #2b6cb0; margin-bottom: 4px;">
+        <div style="display: flex; justify-content: space-between; font-family: monospace; font-size: 0.75rem; font-weight: 700; color: #2b6cb0; margin-bottom: 4px; flex-wrap: wrap;">
           <span>EIXO 1: OSCILOSCÓPIO [Tensão (V) vs Tempo (ms)]</span>
+          <span id="lbl-scope-nyquist-info" style="color: #64748b;">Amostragem Contínua (Ts = 1,0 ms)</span>
           <span id="lbl-scope-vpp" style="color: #276749;">Vpp = 2.00 V</span>
         </div>
         <canvas id="scope-screen" width="700" height="190" style="width: 100%; height: 190px; display: block;"></canvas>
@@ -133,7 +166,7 @@
         <!-- MÓDULO DO KNOB LABVIEW COM VISOR FLUTUANTE AMARELO -->
         <div style="position: relative; width: 190px; height: 190px; margin: 4px auto 6px;">
           <canvas id="knob-canvas" width="190" height="190" style="cursor: grab; display: block;"></canvas>
-          <div id="knob-digital-display" class="labview-digital-box">5.00000</div>
+          <div id="knob-digital-display" class="labview-digital-box">5.00 Hz</div>
         </div>
 
         <!-- BOTÕES PASSO-A-PASSO -->
@@ -189,6 +222,7 @@
 <style>
   .lamp-led { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
   .led-green { background-color: #38a169; box-shadow: 0 0 6px #38a169; }
+  .led-red { background-color: #e53e3e; box-shadow: 0 0 8px #e53e3e; }
   .led-off { background-color: #a0aec0; box-shadow: none; }
 
   .mode-btn, .filter-btn {
@@ -226,7 +260,6 @@
   }
   .push-btn-act:hover { background: #edf2f7; }
 
-  /* CAIXA DIGITAL FLUTUANTE AMARELA CALIBRADA EM HZ */
   .labview-digital-box {
     position: absolute; top: 46%; left: 52%; transform: translate(0, -50%);
     background-color: #fef08a; border: 1.5px solid #000;
@@ -256,6 +289,7 @@
 
 <script>
   let isRunning = true;
+  let Fs = 1000.0; // Frequência de Amostragem dinâmica (Hz)
   let operationalMode = 'overlay';
   let activeFilter = 'none';
   let fc1 = 15;
@@ -286,6 +320,82 @@
   const activeSigBadge = document.getElementById('active-sig-badge');
   const txtActiveAmp = document.getElementById('txt-active-amp');
   const sliderActiveAmp = document.getElementById('slider-active-amp');
+  const selectFs = document.getElementById('select-fs');
+  const inputFsCustom = document.getElementById('input-fs-custom');
+  const nyquistBadge = document.getElementById('nyquist-status-badge');
+  const lblScopeNyquistInfo = document.getElementById('lbl-scope-nyquist-info');
+
+  // =========================================================================
+  // MOTOR MATEMÁTICO DE NYQUIST E DOBRAMENTO DE FREQUÊNCIA (ALIASING)
+  // =========================================================================
+  function getAliasedFrequency(fReal, sampleRate) {
+    if (fReal <= sampleRate / 2.0) return fReal;
+    const k = Math.round(fReal / sampleRate);
+    return Math.abs(fReal - k * sampleRate);
+  }
+
+  function applySamplingFrequency(newFsValue) {
+    const parsed = parseFloat(newFsValue);
+    if (isNaN(parsed) || parsed < 1.0) return;
+    Fs = Math.min(5000.0, Math.max(1.0, parsed));
+    updateNyquistStatus();
+    updateListbox();
+  }
+
+  // Quando o usuário escolhe um preset no dropdown, atualiza o campo digitável
+  selectFs.addEventListener('change', (e) => {
+    if (e.target.value !== 'custom') {
+      inputFsCustom.value = e.target.value;
+      applySamplingFrequency(e.target.value);
+    }
+  });
+
+  // Quando o usuário digita livremente qualquer valor de Fs no campo numérico
+  inputFsCustom.addEventListener('input', (e) => {
+    const valStr = e.target.value;
+    // Verifica se o número digitado coincide com algum preset da lista
+    let matchedPreset = false;
+    Array.from(selectFs.options).forEach(opt => {
+      if (opt.value === valStr) {
+        selectFs.value = valStr;
+        matchedPreset = true;
+      }
+    });
+    if (!matchedPreset) {
+      selectFs.value = 'custom';
+    }
+    applySamplingFrequency(valStr);
+  });
+
+  function updateNyquistStatus() {
+    const nyquistLimit = Fs / 2.0;
+    const tsMs = (1000.0 / Fs).toFixed(1).replace('.', ',');
+    lblScopeNyquistInfo.textContent = `Período Ts = ${tsMs} ms (Fs = ${Fs.toFixed(1).replace('.', ',')} Hz | fN = ${nyquistLimit.toFixed(1).replace('.', ',')} Hz)`;
+
+    let aliasedSignals = [];
+    signals.forEach(sig => {
+      if (sig.freq > nyquistLimit) {
+        const fAlias = getAliasedFrequency(sig.freq, Fs);
+        aliasedSignals.push(`S${sig.id} (${sig.freq.toFixed(1)}Hz → fantasma em ${fAlias.toFixed(1)}Hz)`);
+      }
+    });
+
+    const ledRunEl = document.getElementById('led-run');
+
+    if (aliasedSignals.length > 0) {
+      nyquistBadge.style.background = '#fee2e2';
+      nyquistBadge.style.color = '#991b1b';
+      nyquistBadge.style.borderColor = '#fca5a5';
+      nyquistBadge.innerHTML = `⚠️ ALIASING (Fs/2 = ${nyquistLimit.toFixed(1)} Hz): ${aliasedSignals.join(' | ')}`;
+      if (isRunning) ledRunEl.className = 'lamp-led led-red';
+    } else {
+      nyquistBadge.style.background = '#dcfce7';
+      nyquistBadge.style.color = '#166534';
+      nyquistBadge.style.borderColor = '#86efac';
+      nyquistBadge.innerHTML = `✓ Nyquist (fN = ${nyquistLimit.toFixed(1)} Hz) • Amostragem Segura`;
+      if (isRunning) ledRunEl.className = 'lamp-led led-green';
+    }
+  }
 
   // ========================================================
   // RENDER DO KNOB LABVIEW CALIBRADO DIRETAMENTE DE 0 A 50 HZ
@@ -299,8 +409,6 @@
 
     ctxKnob.clearRect(0, 0, w, h);
 
-    const minFreq = 0;
-    const maxFreq = 50;
     const startAng = Math.PI * 0.75;
     const sweepAng = Math.PI * 1.5;
 
@@ -309,7 +417,6 @@
     ctxKnob.textAlign = 'center';
     ctxKnob.textBaseline = 'middle';
 
-    // Escala radial externa graduada em Hz (0, 5, 10, ... 50 Hz)
     for (let step = 0; step <= 10; step++) {
       const val = step * 5;
       const frac = step / 10;
@@ -334,10 +441,6 @@
       ctxKnob.fillText(val.toString(), lx, ly);
     }
 
-    ctxKnob.font = 'bold 11px Arial, sans-serif';
-    
-
-    // Corpo metálico chanfrado
     const gradBase = ctxKnob.createLinearGradient(cx - rKnob, cy - rKnob, cx + rKnob, cy + rKnob);
     gradBase.addColorStop(0, '#ffffff');
     gradBase.addColorStop(0.5, '#cbd5e0');
@@ -348,7 +451,6 @@
     ctxKnob.fillStyle = gradBase;
     ctxKnob.fill();
 
-    // Esfera 3D central
     const gradSphere = ctxKnob.createRadialGradient(cx - 16, cy - 18, 4, cx, cy, rKnob - 4);
     gradSphere.addColorStop(0, '#ffffff');
     gradSphere.addColorStop(0.35, '#edf2f7');
@@ -360,7 +462,6 @@
     ctxKnob.fillStyle = gradSphere;
     ctxKnob.fill();
 
-    // Covinha de rotação (Finger Indent)
     const currentAngle = startAng + (Math.max(0, Math.min(50, freqVal)) / 50) * sweepAng;
     const dimpleDist = 32;
     const dimpleX = cx + dimpleDist * Math.cos(currentAngle);
@@ -381,7 +482,6 @@
     ctxKnob.lineWidth = 1;
     ctxKnob.stroke();
 
-    // Visor digital flutuante amarelo
     knobDigitalDisplay.textContent = (freqVal).toFixed(2) + ' Hz';
   }
 
@@ -400,6 +500,7 @@
       signals[selectedSignalIndex].freq = realFreq;
       updateListbox();
       syncEditorPanel();
+      updateNyquistStatus();
     }
   }
 
@@ -409,24 +510,28 @@
 
   document.getElementById('btn-freq-down').addEventListener('click', () => {
     signals[selectedSignalIndex].freq = Math.max(1, signals[selectedSignalIndex].freq - 1);
-    updateListbox(); syncEditorPanel();
+    updateListbox(); syncEditorPanel(); updateNyquistStatus();
   });
   document.getElementById('btn-freq-up').addEventListener('click', () => {
     signals[selectedSignalIndex].freq = Math.min(50, signals[selectedSignalIndex].freq + 1);
-    updateListbox(); syncEditorPanel();
+    updateListbox(); syncEditorPanel(); updateNyquistStatus();
   });
   document.getElementById('btn-freq-down5').addEventListener('click', () => {
     signals[selectedSignalIndex].freq = Math.max(1, signals[selectedSignalIndex].freq - 5);
-    updateListbox(); syncEditorPanel();
+    updateListbox(); syncEditorPanel(); updateNyquistStatus();
   });
   document.getElementById('btn-freq-up5').addEventListener('click', () => {
     signals[selectedSignalIndex].freq = Math.min(50, signals[selectedSignalIndex].freq + 5);
-    updateListbox(); syncEditorPanel();
+    updateListbox(); syncEditorPanel(); updateNyquistStatus();
   });
 
   function updateListbox() {
     listbox.innerHTML = '';
+    const nyquistLimit = Fs / 2.0;
+
     signals.forEach((sig, idx) => {
+      const isAliased = sig.freq > nyquistLimit;
+      const fEff = getAliasedFrequency(sig.freq, Fs);
       const item = document.createElement('div');
       item.className = 'listbox-item' + (idx === selectedSignalIndex ? ' selected' : '');
       item.innerHTML = `
@@ -434,7 +539,9 @@
           <span style="width:9px; height:9px; border-radius:50%; background-color:${sig.color};"></span>
           S${sig.id}: ${sig.type.toUpperCase()}
         </span>
-        <span style="color:${sig.color}; font-weight:800;">${sig.freq.toFixed(1)}Hz | ${sig.amp.toFixed(1)}V</span>
+        <span style="color:${isAliased ? '#dc2626' : sig.color}; font-weight:800;">
+          ${sig.freq.toFixed(1)}Hz ${isAliased ? `(→${fEff.toFixed(1)}Hz)` : ''} | ${sig.amp.toFixed(1)}V
+        </span>
       `;
 
       item.addEventListener('click', () => {
@@ -453,6 +560,7 @@
         if (selectedSignalIndex >= signals.length) selectedSignalIndex = signals.length - 1;
         updateListbox();
         syncEditorPanel();
+        updateNyquistStatus();
       });
 
       listbox.appendChild(item);
@@ -483,10 +591,11 @@
     }
     const nextId = signals.length + 1;
     const nextColor = channelColors[(nextId - 1) % channelColors.length];
-    signals.push({ id: nextId, type: 'sine', freq: nextId * 5.0, amp: 0.8, color: nextColor });
+    signals.push({ id: nextId, type: 'sine', freq: Math.min(50, nextId * 5.0), amp: 0.8, color: nextColor });
     selectedSignalIndex = signals.length - 1;
     updateListbox();
     syncEditorPanel();
+    updateNyquistStatus();
   });
 
   document.getElementById('btn-del-sig').addEventListener('click', () => {
@@ -498,6 +607,7 @@
     if (selectedSignalIndex >= signals.length) selectedSignalIndex = signals.length - 1;
     updateListbox();
     syncEditorPanel();
+    updateNyquistStatus();
   });
 
   document.getElementById('btn-clear-all').addEventListener('click', () => {
@@ -505,6 +615,7 @@
     selectedSignalIndex = 0;
     updateListbox();
     syncEditorPanel();
+    updateNyquistStatus();
   });
 
   sliderActiveAmp.addEventListener('input', (e) => {
@@ -551,7 +662,7 @@
         boxFc1.style.display = 'flex';
         boxFc2.style.display = 'flex';
         lblFc1.textContent = 'fc₁';
-        lblScopeFilter.textContent = `FILTRO: PASSA-BANDA (${fc1} - ${fc2} Hz)`;
+        lblScopeFilter.textContent = `FILTRO: PASSA-BANDA (${fc1}-${fc2} Hz)`;
       } else if (activeFilter === 'notch') {
         lblScopeFilter.textContent = 'FILTRO: NOTCH 60Hz';
       } else {
@@ -604,16 +715,21 @@
   const ledRun = document.getElementById('led-run');
   btnRun.addEventListener('click', () => {
     isRunning = !isRunning;
-    ledRun.className = isRunning ? 'lamp-led led-green' : 'lamp-led led-off';
+    if (!isRunning) {
+      ledRun.className = 'lamp-led led-off';
+    } else {
+      updateNyquistStatus();
+    }
     btnRun.style.background = isRunning ? '#238636' : '#c53030';
   });
 
-  function getRawSignalSample(sig, t) {
+  function getRawSignalSample(sig, t, useAliased = true) {
+    const fEffective = useAliased ? getAliasedFrequency(sig.freq, Fs) : sig.freq;
     let s = 0;
-    if (sig.type === 'sine') s = Math.sin(2 * Math.PI * sig.freq * t);
-    else if (sig.type === 'square') s = Math.sin(2 * Math.PI * sig.freq * t) >= 0 ? 1 : -1;
+    if (sig.type === 'sine') s = Math.sin(2 * Math.PI * fEffective * t);
+    else if (sig.type === 'square') s = Math.sin(2 * Math.PI * fEffective * t) >= 0 ? 1 : -1;
     else if (sig.type === 'ecg') {
-      const p = 1.0 / (sig.freq * 0.25);
+      const p = 1.0 / (Math.max(0.5, fEffective) * 0.25);
       const mod = t % p;
       if (mod < 0.08) s = Math.sin((mod / 0.08) * Math.PI) * 0.25;
       else if (mod >= 0.12 && mod < 0.16) s = -Math.sin(((mod - 0.12)/0.04)*Math.PI) * 0.35;
@@ -621,7 +737,7 @@
       else if (mod >= 0.22 && mod < 0.26) s = -Math.sin(((mod - 0.22)/0.04)*Math.PI) * 0.45;
       else if (mod >= 0.32 && mod < 0.44) s = Math.sin(((mod - 0.32)/0.12)*Math.PI) * 0.4;
     } else if (sig.type === 'emg') {
-      s = (Math.random() * 2 - 1) * Math.sin(2 * Math.PI * sig.freq * t);
+      s = (Math.random() * 2 - 1) * Math.sin(2 * Math.PI * fEffective * t);
     }
     return s * sig.amp;
   }
@@ -651,7 +767,6 @@
   dirLight.position.set(20, 40, 20);
   scene3D.add(dirLight);
 
-  // CAIXA DELIMITADORA CÚBICA METÁLICA DE ALTA VISIBILIDADE
   const boxWidth = 30;
   const boxHeight = 15;
   const boxDepth = 22;
@@ -662,17 +777,14 @@
   boxLines.position.set(0, boxHeight / 2, 0);
   scene3D.add(boxLines);
 
-  // Eixos cartesianos coloridos (X: Vermelho/Tempo, Y: Verde/Potência, Z: Azul/Frequência)
   const axes3D = new THREE.AxesHelper(20);
   axes3D.position.set(-boxWidth / 2, 0.1, boxDepth / 2);
   scene3D.add(axes3D);
 
-  // Grade no chão com linhas cinzas
   const floorGrid = new THREE.GridHelper(boxWidth, 15, 0x64748b, 0xcbd5e1);
   floorGrid.position.set(0, 0.08, 0);
   scene3D.add(floorGrid);
 
-  // Superfície plana de base
   const floorGeo = new THREE.PlaneGeometry(boxWidth, boxDepth);
   floorGeo.rotateX(-Math.PI / 2);
   const floorMat = new THREE.MeshBasicMaterial({ color: 0xe2e8f0 });
@@ -680,15 +792,13 @@
   floorMesh.position.y = 0.05;
   scene3D.add(floorMesh);
 
-  // Grade vertical traseira para leitura de amplitude
   const backGrid = new THREE.GridHelper(boxDepth, 10, 0x94a3b8, 0xe2e8f0);
   backGrid.rotateX(Math.PI / 2);
   backGrid.position.set(-boxWidth / 2, boxHeight / 2, 0);
   scene3D.add(backGrid);
 
-  // SUPERFÍCIE 3D SÓLIDA DO ESPECTROGRAMA
-  const gridX = 42; // Fatias no tempo
-  const gridZ = 30; // Frequências
+  const gridX = 42;
+  const gridZ = 30;
   const surfaceGeo = new THREE.PlaneGeometry(boxWidth, boxDepth, gridX - 1, gridZ - 1);
   surfaceGeo.rotateX(-Math.PI / 2);
 
@@ -744,6 +854,7 @@
     const midY = canvasScope.height / 2;
     const divY = canvasScope.height / 8;
     const pxPerVolt = divY / voltDiv;
+    const nyquistLimit = Fs / 2.0;
 
     // 1. TELA TEMPORAL (OSCILOSCÓPIO CLARO COM EIXOS VISÍVEIS)
     ctxScope.fillStyle = '#f8fafc';
@@ -759,14 +870,12 @@
       ctxScope.beginPath(); ctxScope.moveTo(0, y); ctxScope.lineTo(canvasScope.width, y); ctxScope.stroke();
     }
 
-    // Linha de zero volts em destaque
     ctxScope.strokeStyle = '#cbd5e1';
     ctxScope.lineWidth = 1.5;
     ctxScope.setLineDash([3, 3]);
     ctxScope.beginPath(); ctxScope.moveTo(0, midY); ctxScope.lineTo(canvasScope.width, midY); ctxScope.stroke();
     ctxScope.setLineDash([]);
 
-    // Rótulos dos eixos de tempo e voltagem visíveis
     ctxScope.fillStyle = '#64748b';
     ctxScope.font = 'bold 9px monospace';
     ctxScope.fillText('0V', 4, midY - 3);
@@ -780,22 +889,54 @@
 
     if (operationalMode === 'overlay') {
       signals.forEach(sig => {
+        const isAliased = sig.freq > nyquistLimit;
         const gain = getFilterGain(sig.freq);
+
+        if (isAliased) {
+          ctxScope.strokeStyle = 'rgba(148, 163, 184, 0.45)';
+          ctxScope.lineWidth = 1.2;
+          ctxScope.setLineDash([4, 4]);
+          ctxScope.beginPath();
+          for (let x = 0; x < N; x++) {
+            const t = phase + (x / N) * totalTime;
+            const vOrig = getRawSignalSample(sig, t, false) * gain;
+            const yOrig = midY - vOrig * pxPerVolt;
+            if (x === 0) ctxScope.moveTo(x, yOrig);
+            else ctxScope.lineTo(x, yOrig);
+          }
+          ctxScope.stroke();
+          ctxScope.setLineDash([]);
+        }
+
         ctxScope.strokeStyle = sig.color;
         ctxScope.lineWidth = 2.2;
         ctxScope.beginPath();
 
         for (let x = 0; x < N; x++) {
           const t = phase + (x / N) * totalTime;
-          let v = getRawSignalSample(sig, t) * gain;
+          let v = getRawSignalSample(sig, t, true) * gain;
           if (noiseLevel > 0) {
-            v += noiseLevel * getFilterGain(60) * 0.5 * Math.sin(2 * Math.PI * 60 * t);
+            const fNoiseEff = getAliasedFrequency(60, Fs);
+            v += noiseLevel * getFilterGain(60) * 0.5 * Math.sin(2 * Math.PI * fNoiseEff * t);
           }
           const y = midY - v * pxPerVolt;
           if (x === 0) ctxScope.moveTo(x, y);
           else ctxScope.lineTo(x, y);
         }
         ctxScope.stroke();
+
+        if (Fs <= 250) {
+          const dtSample = 1.0 / Fs;
+          ctxScope.fillStyle = sig.color;
+          for (let tS = 0; tS <= totalTime; tS += dtSample) {
+            const xPx = (tS / totalTime) * N;
+            const vS = getRawSignalSample(sig, phase + tS, false) * gain;
+            const yPx = midY - vS * pxPerVolt;
+            ctxScope.beginPath();
+            ctxScope.arc(xPx, yPx, 3.2, 0, Math.PI * 2);
+            ctxScope.fill();
+          }
+        }
       });
     } else {
       ctxScope.strokeStyle = operationalMode === 'sum' ? '#0969da' : '#cf222e';
@@ -807,13 +948,14 @@
         const t = phase + (x / N) * totalTime;
         let v = 0;
         if (operationalMode === 'sum') {
-          signals.forEach(sig => { v += getRawSignalSample(sig, t) * getFilterGain(sig.freq); });
+          signals.forEach(sig => { v += getRawSignalSample(sig, t, true) * getFilterGain(sig.freq); });
         } else {
-          v = getRawSignalSample(signals[0], t) * getFilterGain(signals[0].freq) - 
-              (signals[1] ? getRawSignalSample(signals[1], t) * getFilterGain(signals[1].freq) : 0);
+          v = getRawSignalSample(signals[0], t, true) * getFilterGain(signals[0].freq) - 
+              (signals[1] ? getRawSignalSample(signals[1], t, true) * getFilterGain(signals[1].freq) : 0);
         }
         if (noiseLevel > 0) {
-          v += noiseLevel * getFilterGain(60) * 0.5 * Math.sin(2 * Math.PI * 60 * t);
+          const fNoiseEff = getAliasedFrequency(60, Fs);
+          v += noiseLevel * getFilterGain(60) * 0.5 * Math.sin(2 * Math.PI * fNoiseEff * t);
         }
         if (v < minV) minV = v;
         if (v > maxV) maxV = v;
@@ -828,7 +970,7 @@
       document.getElementById('lbl-scope-vpp').textContent = `Vpp = ${vpp.toFixed(2)} V`;
     }
 
-    // 2. FFT REAL COM EIXO HORIZONTAL GRADUADO EM HZ
+    // 2. FFT REAL COM EIXO HORIZONTAL GRADUADO EM HZ E MARCADOR DE NYQUIST
     ctxFFT.fillStyle = '#f8fafc';
     ctxFFT.fillRect(0, 0, canvasFFT.width, canvasFFT.height);
 
@@ -837,20 +979,37 @@
     let maxSpectrumVal = 0;
     let peakFreq = 0;
 
-    // Retículo FFT
     ctxFFT.strokeStyle = '#e2e8f0';
     for (let f = 0; f <= maxF; f += 5) {
       const x = (f / maxF) * canvasFFT.width;
       ctxFFT.beginPath(); ctxFFT.moveTo(x, 0); ctxFFT.lineTo(x, canvasFFT.height - 18); ctxFFT.stroke();
 
-      // Rótulos do eixo de frequência bem visíveis
       ctxFFT.fillStyle = '#64748b';
       ctxFFT.font = 'bold 9px monospace';
       ctxFFT.textAlign = 'center';
       ctxFFT.fillText(`${f}Hz`, x, canvasFFT.height - 4);
     }
 
-    // Curva espectral contínua
+    if (nyquistLimit <= maxF) {
+      const xNyq = (nyquistLimit / maxF) * canvasFFT.width;
+      ctxFFT.fillStyle = 'rgba(220, 38, 38, 0.07)';
+      ctxFFT.fillRect(xNyq, 0, canvasFFT.width - xNyq, canvasFFT.height - 18);
+
+      ctxFFT.strokeStyle = '#dc2626';
+      ctxFFT.lineWidth = 1.8;
+      ctxFFT.setLineDash([4, 4]);
+      ctxFFT.beginPath();
+      ctxFFT.moveTo(xNyq, 0);
+      ctxFFT.lineTo(xNyq, canvasFFT.height - 18);
+      ctxFFT.stroke();
+      ctxFFT.setLineDash([]);
+
+      ctxFFT.fillStyle = '#dc2626';
+      ctxFFT.font = 'bold 9px monospace';
+      ctxFFT.textAlign = 'left';
+      ctxFFT.fillText(`fN=${nyquistLimit.toFixed(1)}Hz`, Math.min(canvasFFT.width - 75, xNyq + 4), 12);
+    }
+
     ctxFFT.lineWidth = 2.4;
     ctxFFT.strokeStyle = '#b7791f';
     ctxFFT.beginPath();
@@ -860,19 +1019,22 @@
       let mag = 0.02;
 
       signals.forEach(sig => {
+        const fEffective = getAliasedFrequency(sig.freq, Fs);
         const gain = getFilterGain(sig.freq);
         const bw = 1.0;
-        mag += (sig.amp * gain) / (1 + Math.pow((f - sig.freq) / bw, 2));
+        mag += (sig.amp * gain) / (1 + Math.pow((f - fEffective) / bw, 2));
 
         if (sig.type === 'square') {
           for (let h = 3; h <= 7; h += 2) {
-            mag += (sig.amp * getFilterGain(sig.freq * h) / h) / (1 + Math.pow((f - (sig.freq * h)) / (bw * 1.2), 2));
+            const fHarmEff = getAliasedFrequency(sig.freq * h, Fs);
+            mag += (sig.amp * getFilterGain(sig.freq * h) / h) / (1 + Math.pow((f - fHarmEff) / (bw * 1.2), 2));
           }
         }
       });
 
       if (noiseLevel > 0) {
-        mag += (noiseLevel * getFilterGain(60) * 0.9) / (1 + Math.pow((f - 60) / 1.0, 2));
+        const fNoiseEff = getAliasedFrequency(60, Fs);
+        mag += (noiseLevel * getFilterGain(60) * 0.9) / (1 + Math.pow((f - fNoiseEff) / 1.0, 2));
       }
 
       if (mag > maxSpectrumVal) {
@@ -891,7 +1053,7 @@
     ctxFFT.fillStyle = 'rgba(183, 121, 31, 0.12)';
     ctxFFT.fill();
 
-    document.getElementById('lbl-fft-peaks').textContent = `Pico Dominante: ${peakFreq.toFixed(1)} Hz (${maxSpectrumVal.toFixed(2)} V)`;
+    document.getElementById('lbl-fft-peaks').textContent = `Pico Reconstruído: ${peakFreq.toFixed(1)} Hz (${maxSpectrumVal.toFixed(2)} V)`;
 
     // 3. ATUALIZAÇÃO DA SUPERFÍCIE 3D ESTABILIZADA (STFT)
     for (let x = gridX - 1; x > 0; x--) {
@@ -902,13 +1064,17 @@
       const f = (z / gridZ) * maxF;
       let power = 0.04;
       signals.forEach(sig => {
+        const fEffective = getAliasedFrequency(sig.freq, Fs);
         const gain = getFilterGain(sig.freq);
-        if (Math.abs(f - sig.freq) < 2.0) {
+        if (Math.abs(f - fEffective) < 2.0) {
           power += sig.amp * gain * 1.6;
         }
       });
-      if (noiseLevel > 0 && Math.abs(f - 60) < 2.0) {
-        power += noiseLevel * getFilterGain(60) * 1.2;
+      if (noiseLevel > 0) {
+        const fNoiseEff = getAliasedFrequency(60, Fs);
+        if (Math.abs(f - fNoiseEff) < 2.0) {
+          power += noiseLevel * getFilterGain(60) * 1.2;
+        }
       }
       historyMatrix[0][z] = power;
     }
@@ -921,7 +1087,6 @@
         const index = (i * gridX + j) * 3;
         const val = historyMatrix[j][i];
         
-        // Relevo volumétrico suave e perfeitamente contido na caixa
         positions[index + 1] = Math.min(14.0, val * 4.2);
 
         const color = getColorFromColormap(val / 2.0, currentColormap);
@@ -948,6 +1113,7 @@
     renderer3D.setSize(stftContainer.clientWidth, stftContainer.clientHeight);
   });
 
+  updateNyquistStatus();
   updateListbox();
   syncEditorPanel();
   renderAll();

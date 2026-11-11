@@ -171,15 +171,24 @@
         <a href="{% url 'projetos' %}">Projetos</a>
         <a href="{% url 'publicacoes' %}">Publicações</a>
         <a href="{% url 'stack' %}">Stack</a>
+        <a href="{% url 'lab_dsp' %}">DSP</a>
+        <a href="{% url 'lab_duckdb' %}">PubMed</a>
+
 
         <div class="dropdown" id="bio-dropdown">
           <button type="button" class="dropdown-btn" id="bio-dropdown-btn">
-            Engenharia Biomédica ▾
+            Stroop Teste ▾
           </button>
           <div class="dropdown-content">
+<<<<<<< HEAD
             <a href="{% url 'lab_dsp' %}">Osciloscópio & DSP</a>
             <!-- <a href="{% url 'lab_vcg' %}"> Vetorcardiograma 3D</a> -->
             <a href="{% url 'lab_duckdb' %}">Mineração no PubMed</a>
+=======
+            
+            <a class="nav-link" href="{% url 'stroop_test' %}">Teste de Stroop</a>
+            <a class="nav-link" href="{% url 'stroop_analytics' %}">Métricas Cognitivas</a>
+>>>>>>> 4cd1547 (feat: adiciona protocolo Stroop com series sobrepostas/laudo e chave Nyquist Fs no lab DSP)
           </div>
         </div>
 

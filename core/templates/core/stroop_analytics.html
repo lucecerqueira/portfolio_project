@@ -1,0 +1,964 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<style>
+    .analytics-wrapper {
+        max-width: 1120px;
+        margin: 2.5rem auto;
+        padding: 0 1.25rem;
+        color: #1e293b;
+    }
+    .analytics-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    .badge-tag {
+        display: inline-block;
+        background: #dbeafe;
+        color: #1d4ed8;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        padding: 0.25rem 0.75rem;
+        border-radius: 999px;
+        margin-bottom: 0.4rem;
+    }
+    .page-title {
+        font-size: 1.75rem;
+        font-weight: 800;
+        color: #0f172a;
+        margin: 0;
+    }
+    .btn-new-session {
+        background: #2563eb;
+        color: #ffffff;
+        padding: 0.65rem 1.25rem;
+        border-radius: 10px;
+        font-weight: 700;
+        font-size: 0.9rem;
+        text-decoration: none;
+        box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+        transition: background 0.2s;
+    }
+    .btn-new-session:hover {
+        background: #1d4ed8;
+    }
+    .btn-report-trigger {
+        background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+        color: #ffffff;
+        padding: 0.65rem 1.3rem;
+        border-radius: 10px;
+        font-weight: 700;
+        font-size: 0.9rem;
+        border: none;
+        cursor: pointer;
+        box-shadow: 0 4px 14px rgba(15, 23, 42, 0.25);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .btn-report-trigger:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(30, 58, 138, 0.35);
+    }
+    .btn-switch-user {
+        background: #ffffff;
+        color: #dc2626;
+        border: 1px solid #fecaca;
+        padding: 0.65rem 1.1rem;
+        border-radius: 10px;
+        font-weight: 700;
+        font-size: 0.9rem;
+        text-decoration: none;
+        transition: background 0.2s;
+    }
+    .btn-switch-user:hover {
+        background: #fef2f2;
+    }
+    .smart-banner {
+        background: linear-gradient(135deg, #eff6ff 0%, #f8fafc 100%);
+        border: 1px solid #bfdbfe;
+        border-left: 5px solid #2563eb;
+        border-radius: 16px;
+        padding: 1.35rem 1.75rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1.25rem;
+        box-shadow: 0 4px 15px rgba(37, 99, 235, 0.06);
+    }
+    .search-user-bar {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 0.85rem 1.25rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    .white-card {
+        background: #ffffff;
+        border-radius: 16px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 20px rgba(15, 23, 42, 0.05);
+        padding: 1.75rem;
+        margin-bottom: 1.5rem;
+    }
+    .card-top-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #f1f5f9;
+        padding-bottom: 0.85rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    .card-top-bar h3 {
+        margin: 0;
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #0f172a;
+    }
+    .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+    /* Caixas Interativas Clicáveis */
+    .kpi-box {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 1.2rem 1rem;
+        text-align: center;
+        position: relative;
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        user-select: none;
+    }
+    .kpi-box:hover {
+        transform: translateY(-4px);
+        background: #ffffff;
+        border-color: #93c5fd;
+        box-shadow: 0 12px 24px -6px rgba(37, 99, 235, 0.15);
+    }
+    .kpi-box:active {
+        transform: translateY(-1px);
+    }
+    .kpi-click-hint {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        margin-top: 0.55rem;
+        font-size: 0.7rem;
+        font-weight: 700;
+        color: #2563eb;
+        background: #eff6ff;
+        padding: 0.2rem 0.6rem;
+        border-radius: 99px;
+        opacity: 0.85;
+        transition: opacity 0.2s, background 0.2s;
+    }
+    .kpi-box:hover .kpi-click-hint {
+        opacity: 1;
+        background: #dbeafe;
+    }
+    .kpi-label {
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: #64748b;
+        text-transform: uppercase;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.35rem;
+        margin-bottom: 0.35rem;
+    }
+    .kpi-value {
+        font-size: 1.65rem;
+        font-weight: 800;
+        color: #0f172a;
+    }
+    .chart-box {
+        position: relative;
+        height: 360px;
+        width: 100%;
+    }
+    .help-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: #dbeafe;
+        color: #1d4ed8;
+        font-size: 0.7rem;
+        font-weight: 800;
+    }
+
+    /* Modais Modernos (Glassmorphism) */
+    .modal-backdrop-custom {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.6);
+        backdrop-filter: blur(6px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        padding: 1.25rem;
+    }
+    .modal-backdrop-custom.active {
+        display: flex;
+        animation: fadeIn 0.18s ease-out;
+    }
+    .modal-report-card {
+        background: #ffffff;
+        width: 100%;
+        max-width: 820px;
+        max-height: 90vh;
+        border-radius: 20px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+        border: 1px solid #e2e8f0;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+    }
+    /* Modal Spotlight para cada Caixa Clicada */
+    .metric-spotlight-card {
+        background: #ffffff;
+        width: 100%;
+        max-width: 580px;
+        border-radius: 22px;
+        box-shadow: 0 25px 60px -15px rgba(15, 23, 42, 0.4);
+        border: 1px solid #e2e8f0;
+        overflow: hidden;
+        animation: popScale 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .spotlight-header {
+        background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+        color: #ffffff;
+        padding: 1.5rem 1.75rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .spotlight-value-pill {
+        background: rgba(255, 255, 255, 0.12);
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        border-radius: 12px;
+        padding: 0.6rem 1rem;
+        margin: 1.25rem 1.75rem 0 1.75rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #f8fafc;
+        border-color: #cbd5e1;
+    }
+    .spotlight-body {
+        padding: 1.25rem 1.75rem 1.75rem 1.75rem;
+    }
+    .example-box {
+        background: #eff6ff;
+        border-left: 4px solid #2563eb;
+        border-radius: 10px;
+        padding: 1rem 1.15rem;
+        margin-top: 1rem;
+    }
+    .scale-bar {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+        margin-top: 1rem;
+        text-align: center;
+        font-size: 0.75rem;
+        font-weight: 700;
+    }
+    .scale-segment {
+        padding: 0.45rem;
+        border-radius: 8px;
+    }
+    .modal-header-custom {
+        background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+        color: #ffffff;
+        padding: 1.5rem 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+    .modal-body-custom {
+        padding: 2rem;
+    }
+    .report-section {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 1.25rem 1.5rem;
+        margin-bottom: 1.15rem;
+    }
+    .report-section h4 {
+        margin: 0 0 0.5rem 0;
+        font-size: 1rem;
+        font-weight: 800;
+        color: #0f172a;
+    }
+    .report-section p {
+        margin: 0;
+        color: #334155;
+        font-size: 0.92rem;
+        line-height: 1.65;
+    }
+    .mini-metrics-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.75rem;
+        margin-bottom: 1.25rem;
+    }
+    .mini-metric {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 0.85rem;
+        text-align: center;
+    }
+    .modal-footer-custom {
+        padding: 1.1rem 2rem;
+        border-top: 1px solid #e2e8f0;
+        background: #f8fafc;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    @keyframes popScale {
+        from { opacity: 0; transform: scale(0.94) translateY(10px); }
+        to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+</style>
+
+<div class="analytics-wrapper">
+    <!-- Cabeçalho Principal -->
+    <div class="analytics-header">
+        <div>
+            <span class="badge-tag">Participante Ativo: {{ participant_code }}</span>
+            <h1 class="page-title">Séries Temporais Sobrepostas & Inferência</h1>
+            <p style="color: #64748b; margin: 0.25rem 0 0 0; font-size: 0.95rem;">
+                Baterias alinhadas no marco zero para <strong>{{ participant_code }}</strong>: <strong>{{ total_sessions }}</strong>
+            </p>
+        </div>
+        <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+            {% if smart_report %}
+            <button type="button" class="btn-report-trigger" onclick="openReportModal()">
+                <span>Abrir Laudo Interpretativo</span>
+            </button>
+            {% endif %}
+            <a href="{% url 'stroop_test' %}" class="btn-new-session">+ Sobrepor Nova Bateria</a>
+            <a href="{% url 'stroop_test' %}?novo=1" class="btn-switch-user">↺ Novo Usuário</a>
+        </div>
+    </div>
+
+    <!-- Banner de Diagnóstico Rápido -->
+    {% if smart_report %}
+    <div class="smart-banner">
+        <div style="max-width: 720px;">
+            <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.35rem;">
+                <span style="background: {{ smart_report.speed_color }}; color: #fff; font-size: 0.72rem; font-weight: 800; padding: 0.2rem 0.65rem; border-radius: 99px; text-transform: uppercase;">
+                    {{ smart_report.speed_status }}
+                </span>
+                <span style="font-size: 0.85rem; font-weight: 700; color: #1e3a8a;">
+                    • {{ smart_report.inhibition_title }}
+                </span>
+            </div>
+            <p style="margin: 0; color: #334155; font-size: 0.92rem; line-height: 1.5;">
+                {{ smart_report.series_insight }}
+            </p>
+        </div>
+        <div>
+            <button type="button" class="btn-report-trigger" onclick="openReportModal()" style="background: #2563eb;">
+                Ler Explicação Detalhada →
+            </button>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Barra para Consultar Outro Voluntário -->
+    <form method="get" action="{% url 'stroop_analytics' %}" class="search-user-bar">
+        <div style="font-size: 0.9rem; color: #475569;">
+            <strong>Alternar participante:</strong> Digite o código de identificação para visualizar o relatório daquele voluntário.
+        </div>
+        <div style="display: flex; gap: 0.5rem;">
+            <input type="text" name="p" placeholder="Ex: VOL-1024" value="{{ participant_code }}"
+                   style="padding: 0.45rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 8px; font-weight: 700; text-transform: uppercase; width: 160px;">
+            <button type="submit" style="background: #0f172a; color: #ffffff; border: none; border-radius: 8px; padding: 0.45rem 1rem; font-weight: 600; cursor: pointer;">
+                Carregar Séries
+            </button>
+        </div>
+    </form>
+
+    <!-- 1. Gráfico Principal: Séries Temporais Sobrepostas -->
+    <div class="white-card">
+        <div class="card-top-bar">
+            <h3>Séries Temporais Sobrepostas: Tempo de Reação por Tentativa (Origem em 0 ms)</h3>
+            <span class="badge-tag" style="margin:0;">T1–T8: Congruente/Neutro | T9–T16: Incongruente</span>
+        </div>
+        <p style="color: #475569; font-size: 0.9rem; margin-top: 0;">
+            Cada linha representa uma bateria completa iniciando no ponto <strong>(0, 0)</strong>. Observe como a partir de <strong>T9</strong> (início do conflito entre palavra e cor) ocorrem picos de latência que revelam o esforço do controle inibitório.
+        </p>
+        <div class="chart-box">
+            <canvas id="chartOverlaidTrials"></canvas>
+        </div>
+    </div>
+
+    <!-- 2. Gráfico Secundário: Tempo Acumulado Sobreposto -->
+    <div class="white-card">
+        <div class="card-top-bar">
+            <h3>Curvas Acumuladas Sobrepostas: Tempo Total Decorrido desde o Zero (s)</h3>
+            <span style="font-size: 0.8rem; color: #64748b;">A curva que terminar mais abaixo representa a bateria mais rápida</span>
+        </div>
+        <div class="chart-box" style="height: 300px;">
+            <canvas id="chartCumulativeOverlaid"></canvas>
+        </div>
+    </div>
+
+    <!-- 3. Caixas Interativas Clicáveis: Estatística Intra-Sujeito -->
+    <div class="white-card">
+        {% if analysis_type == 'single' %}
+            <div class="card-top-bar">
+                <h3>Desempenho Individual — 1ª Bateria Registrada</h3>
+                <span class="badge-tag" style="margin:0;">Clique em qualquer caixa para ver exemplos</span>
+            </div>
+            <p style="color: #475569; font-size: 0.92rem; margin-top: 0;">
+                Clique sobre qualquer indicador abaixo para abrir uma explicação interativa com exemplos práticos.
+            </p>
+            <div class="kpi-grid">
+                <div class="kpi-box" onclick="openMetricDetail('stroop_effect', '{{ stats_results.user_effect }} ms')">
+                    <span class="kpi-label">Efeito Stroop (Δ RT) <span class="help-badge">?</span></span>
+                    <span class="kpi-value" style="color: #dc2626;">{{ stats_results.user_effect }} ms</span>
+                    <div><span class="kpi-click-hint"> Clique para entender</span></div>
+                </div>
+                <div class="kpi-box" onclick="openMetricDetail('mean_rt', '{{ stats_results.user_rt }} ms')">
+                    <span class="kpi-label">Tempo de Reação Médio <span class="help-badge">?</span></span>
+                    <span class="kpi-value" style="color: #2563eb;">{{ stats_results.user_rt }} ms</span>
+                    <div><span class="kpi-click-hint"> Clique para entender</span></div>
+                </div>
+                <div class="kpi-box" onclick="openMetricDetail('accuracy', '{{ stats_results.user_acc }}%')">
+                    <span class="kpi-label">Acurácia da Bateria <span class="help-badge">?</span></span>
+                    <span class="kpi-value" style="color: #16a34a;">{{ stats_results.user_acc }}%</span>
+                    <div><span class="kpi-click-hint"> Clique para entender</span></div>
+                </div>
+            </div>
+
+        {% elif analysis_type == 'paired_t' %}
+            <div class="card-top-bar">
+                <h3>Comparação entre as 2 Séries Sobrepostas (Teste t Pareado)</h3>
+                <span class="badge-tag" style="margin:0;">Clique nas caixas para exemplos práticos</span>
+            </div>
+            <p style="color: #475569; font-size: 0.92rem; margin-top: 0;">
+                {{ smart_report.longitudinal_insight }}
+            </p>
+            <div class="kpi-grid">
+                <div class="kpi-box" onclick="openMetricDetail('t_stat', '{{ stats_results.t_stat }}')">
+                    <span class="kpi-label">Estatística t <span class="help-badge">?</span></span>
+                    <span class="kpi-value">{{ stats_results.t_stat }}</span>
+                    
+                </div>
+                <div class="kpi-box" onclick="openMetricDetail('p_value', '{{ stats_results.p_value }}')">
+                    <span class="kpi-label">Valor de p (p-value) <span class="help-badge">?</span></span>
+                    <span class="kpi-value" style="color: #2563eb;">{{ stats_results.p_value }}</span>
+                    
+                </div>
+                <div class="kpi-box" onclick="openMetricDetail('mean_diff', '{{ stats_results.mean_diff }} ms')">
+                    <span class="kpi-label">Diferença Média (B1 − B2) <span class="help-badge">?</span></span>
+                    <span class="kpi-value">{{ stats_results.mean_diff }} ms</span>
+               
+                </div>
+                <div class="kpi-box" onclick="openMetricDetail('decision', '{% if stats_results.significant %}Evolução Significativa{% else %}Sem Variação Significativa{% endif %}')">
+                    <span class="kpi-label">Decisão (α = 0,05) <span class="help-badge">?</span></span>
+                    {% if stats_results.significant %}
+                        <span class="kpi-value" style="color: #16a34a; font-size: 1.15rem; display:block;">Evolução Significativa</span>
+                    {% else %}
+                        <span class="kpi-value" style="color: #64748b; font-size: 1.15rem; display:block;">Sem Variação Significativa</span>
+                    {% endif %}
+                    
+                </div>
+            </div>
+
+        {% elif analysis_type == 'anova' %}
+            <div class="card-top-bar">
+                <h3>Análise de Variância das {{ total_sessions }} Séries Sobrepostas (One-Way ANOVA)</h3>
+                <span class="badge-tag" style="margin:0; background:#dcfce7; color:#15803d;">Clique nas caixas para exemplos</span>
+            </div>
+            <p style="color: #475569; font-size: 0.92rem; margin-top: 0;">
+                {{ smart_report.longitudinal_insight }}
+            </p>
+            <div class="kpi-grid">
+                <div class="kpi-box" onclick="openMetricDetail('f_stat', '{{ stats_results.f_stat }}')">
+                    <span class="kpi-label">Estatística F (ANOVA) <span class="help-badge">?</span></span>
+                    <span class="kpi-value">{{ stats_results.f_stat }}</span>
+                    
+                </div>
+                <div class="kpi-box" onclick="openMetricDetail('p_value', '{{ stats_results.p_value }}')">
+                    <span class="kpi-label">Valor de p (p-value) <span class="help-badge">?</span></span>
+                    <span class="kpi-value" style="color: #2563eb;">{{ stats_results.p_value }}</span>
+                   
+                </div>
+                <div class="kpi-box" onclick="openMetricDetail('decision', '{% if stats_results.significant %}Adaptação Significativa{% else %}Estabilidade entre Séries{% endif %}')">
+                    <span class="kpi-label">Efeito do Protocolo <span class="help-badge">?</span></span>
+                    {% if stats_results.significant %}
+                        <span class="kpi-value" style="color: #16a34a; font-size: 1.2rem; display:block;">Adaptação Significativa</span>
+                    {% else %}
+                        <span class="kpi-value" style="color: #64748b; font-size: 1.2rem; display:block;">Estabilidade entre Séries</span>
+                    {% endif %}
+                   
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- 4. Seção Final: Caixas Clicáveis da Base de Dados -->
+    <div class="white-card" style="border: 2px solid #bfdbfe; background: #f8fafc;">
+        <div class="card-top-bar" style="border-bottom-color: #e2e8f0;">
+            <h3>Comparativo Final: Seu Desempenho Consolidado vs. Média da Base</h3>
+            <span class="badge-tag" style="margin:0;">{{ base_comparison.norm_source }}</span>
+        </div>
+        <p style="color: #475569; font-size: 0.92rem; margin-top: 0;">
+            Posição consolidada do participante <strong>{{ participant_code }}</strong> frente à distribuição global da plataforma (μ = {{ base_comparison.db_mean_effect }} ms, σ = {{ base_comparison.db_sd_effect }} ms). <strong>Clique em qualquer caixa para ver exemplos.</strong>
+        </p>
+        <div class="kpi-grid">
+            <div class="kpi-box" style="background: #ffffff;" onclick="openMetricDetail('stroop_effect', '{{ base_comparison.user_mean_effect }} ms (Base: {{ base_comparison.db_mean_effect }} ms)')">
+                <span class="kpi-label">Sua Média (Efeito Stroop) <span class="help-badge">?</span></span>
+                <span class="kpi-value" style="color: #dc2626;">{{ base_comparison.user_mean_effect }} ms</span>
+                <small style="color:#64748b; display:block; margin-top:4px;">Média da Base: {{ base_comparison.db_mean_effect }} ms</small>
+               
+            </div>
+            <div class="kpi-box" style="background: #ffffff;" onclick="openMetricDetail('mean_rt', '{{ base_comparison.user_mean_rt }} ms (Base: {{ base_comparison.db_mean_rt }} ms)')">
+                <span class="kpi-label">Seu Tempo Médio Global <span class="help-badge">?</span></span>
+                <span class="kpi-value" style="color: #2563eb;">{{ base_comparison.user_mean_rt }} ms</span>
+                <small style="color:#64748b; display:block; margin-top:4px;">Média da Base: {{ base_comparison.db_mean_rt }} ms</small>
+               
+            </div>
+            <div class="kpi-box" style="background: #ffffff;" onclick="openMetricDetail('z_score', '{{ base_comparison.z_score }}')">
+                <span class="kpi-label">Escore Padronizado (Z-Score) <span class="help-badge">?</span></span>
+                <span class="kpi-value" style="color: #0f172a;">{{ base_comparison.z_score }}</span>
+                <small style="color:#64748b; display:block; margin-top:4px;">Desvios em relação à base</small>
+                
+            </div>
+            <div class="kpi-box" style="background: #ffffff;" onclick="openMetricDetail('percentile', '{{ base_comparison.percentile }}%')">
+                <span class="kpi-label">Posição Relativa (Percentil) <span class="help-badge">?</span></span>
+                <span class="kpi-value" style="color: #16a34a;">{{ base_comparison.percentile }}%</span>
+                <small style="color:#64748b; display:block; margin-top:4px;">Distribuição acumulada</small>
+                
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ======================================================================= -->
+<!-- POP-UP INTERATIVO 1: EXPLICAÇÃO DE CADA CAIXA COM EXEMPLOS PRÁTICOS     -->
+<!-- ======================================================================= -->
+<div id="metricSpotlightModal" class="modal-backdrop-custom" onclick="closeMetricDetail()">
+    <div class="metric-spotlight-card" onclick="event.stopPropagation()">
+        <div class="spotlight-header">
+            <div>
+                <span id="spot-category" style="font-size: 0.7rem; font-weight: 800; text-transform: uppercase; color: #93c5fd; letter-spacing: 0.5px;">
+                    Guia Interativo de Métricas
+                </span>
+                <h3 id="spot-title" style="margin: 0.25rem 0 0 0; font-size: 1.3rem; font-weight: 800;">
+                    Nome da Métrica
+                </h3>
+            </div>
+            <button type="button" onclick="closeMetricDetail()" style="background: rgba(255,255,255,0.15); border: none; color: #fff; width: 34px; height: 34px; border-radius: 50%; font-size: 1rem; cursor: pointer; font-weight: bold;">
+                ✕
+            </button>
+        </div>
+
+        <div class="spotlight-value-pill">
+            <span style="font-size: 0.82rem; font-weight: 700; color: #64748b; text-transform: uppercase;">Seu Resultado Atual:</span>
+            <span id="spot-user-val" style="font-size: 1.35rem; font-weight: 800; color: #2563eb;">---</span>
+        </div>
+
+        <div class="spotlight-body">
+            <h4 style="margin: 0 0 0.4rem 0; font-size: 0.95rem; color: #0f172a;">O que este número significa?</h4>
+            <p id="spot-concept" style="margin: 0; color: #334155; font-size: 0.92rem; line-height: 1.6;"></p>
+
+            <!-- Régua Visual de Referência -->
+            <div id="spot-scale" class="scale-bar"></div>
+
+            <!-- Exemplo Prático Didático -->
+            <div class="example-box">
+                <div style="font-size: 0.78rem; font-weight: 800; color: #1d4ed8; text-transform: uppercase; margin-bottom: 0.3rem;">
+                    💡 Exemplo Prático para Facilitar a Interpretação
+                </div>
+                <p id="spot-example" style="margin: 0; color: #1e293b; font-size: 0.88rem; line-height: 1.55;"></p>
+            </div>
+
+            <div style="margin-top: 1.25rem; text-align: right;">
+                <button type="button" onclick="closeMetricDetail()" style="background: #0f172a; color: #ffffff; border: none; padding: 0.55rem 1.3rem; border-radius: 10px; font-weight: 700; font-size: 0.88rem; cursor: pointer;">
+                    Fechar Explicação
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ======================================================================= -->
+<!-- POP-UP INTERATIVO 2: LAUDO NEUROCOGNITIVO COMPLETO                      -->
+<!-- ======================================================================= -->
+{% if smart_report %}
+<div id="reportModal" class="modal-backdrop-custom" onclick="closeReportModal()">
+    <div class="modal-report-card" onclick="event.stopPropagation()">
+        <div class="modal-header-custom">
+            <div>
+                <span style="background: rgba(255,255,255,0.15); color: #93c5fd; font-size: 0.72rem; font-weight: 700; padding: 0.25rem 0.65rem; border-radius: 99px; text-transform: uppercase;">
+                    Relatório Automatizado de Psicometria & Neurociência
+                </span>
+                <h2 style="margin: 0.5rem 0 0.2rem 0; font-size: 1.45rem; font-weight: 800;">
+                    Laudo Interpretativo — Participante {{ participant_code }}
+                </h2>
+                <p style="margin: 0; font-size: 0.85rem; color: #cbd5e1;">
+                    Síntese clínica e estatística gerada a partir de {{ total_sessions }} bateria(s) experimental(is).
+                </p>
+            </div>
+            <button type="button" onclick="closeReportModal()" style="background: rgba(255,255,255,0.1); border: none; color: #fff; width: 36px; height: 36px; border-radius: 50%; font-size: 1.1rem; cursor: pointer; font-weight: bold;">
+                ✕
+            </button>
+        </div>
+
+        <div class="modal-body-custom">
+            <div class="mini-metrics-row">
+                <div class="mini-metric">
+                    <small style="color:#64748b; font-weight:700; font-size:0.72rem; text-transform:uppercase;">Média Bloco 1 (Basal)</small>
+                    <div style="font-size:1.25rem; font-weight:800; color:#16a34a; margin-top:2px;">{{ smart_report.mean_b1 }} ms</div>
+                </div>
+                <div class="mini-metric">
+                    <small style="color:#64748b; font-weight:700; font-size:0.72rem; text-transform:uppercase;">Média Bloco 2 (Conflito)</small>
+                    <div style="font-size:1.25rem; font-weight:800; color:#dc2626; margin-top:2px;">{{ smart_report.mean_b2 }} ms</div>
+                </div>
+                <div class="mini-metric">
+                    <small style="color:#64748b; font-weight:700; font-size:0.72rem; text-transform:uppercase;">Pico de Latência</small>
+                    <div style="font-size:1.25rem; font-weight:800; color:#0f172a; margin-top:2px;">{{ smart_report.peak_trial_num }} ({{ smart_report.peak_trial_val }} ms)</div>
+                </div>
+                <div class="mini-metric">
+                    <small style="color:#64748b; font-weight:700; font-size:0.72rem; text-transform:uppercase;">Oscilação (CV%)</small>
+                    <div style="font-size:1.25rem; font-weight:800; color:#2563eb; margin-top:2px;">{{ smart_report.cv_percent }}%</div>
+                </div>
+            </div>
+
+            <div class="report-section">
+                <h4>⚡ 1. Velocidade de Processamento Sensório-Motor: <span style="color: {{ smart_report.speed_color }};">{{ smart_report.speed_status }}</span></h4>
+                <p>{{ smart_report.speed_text }}</p>
+            </div>
+
+            <div class="report-section">
+                <h4>🧠 2. Controle Inibitório (Efeito Stroop): <span style="color: #1e3a8a;">{{ smart_report.inhibition_title }}</span></h4>
+                <p>{{ smart_report.inhibition_text }}</p>
+            </div>
+
+            <div class="report-section">
+                <h4>📈 3. Dinâmica da Série Temporal e Transição de Bloco (T1 → T16)</h4>
+                <p>{{ smart_report.series_insight }}</p>
+            </div>
+
+            <div class="report-section" style="margin-bottom: 0; border-left: 4px solid #2563eb;">
+                <h4>🔬 4. O que significam seus testes estatísticos?</h4>
+                <p>{{ smart_report.longitudinal_insight }}</p>
+            </div>
+        </div>
+
+        <div class="modal-footer-custom">
+            <span style="font-size: 0.8rem; color: #64748b;">
+                Acurácia da última coleta: <strong>{{ smart_report.last_acc }}%</strong> | Base normativa: {{ base_comparison.norm_source }}
+            </span>
+            <div style="display: flex; gap: 0.65rem;">
+                <button type="button" onclick="window.print()" style="background: #ffffff; color: #0f172a; border: 1px solid #cbd5e1; padding: 0.55rem 1rem; border-radius: 8px; font-weight: 700; font-size: 0.85rem; cursor: pointer;">
+                    🖨️ Imprimir / Salvar PDF
+                </button>
+                <button type="button" onclick="closeReportModal()" style="background: #2563eb; color: #ffffff; border: none; padding: 0.55rem 1.25rem; border-radius: 8px; font-weight: 700; font-size: 0.85rem; cursor: pointer;">
+                    Entendido
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Dicionário Rico de Explicações e Exemplos Práticos para cada Caixa
+const METRIC_DICTIONARY = {
+    't_stat': {
+        category: 'Estatística Inferencial • Teste t Pareado',
+        title: 'Estatística t (Student)',
+        concept: 'Mede o tamanho da diferença entre a Bateria 1 e a Bateria 2 dividido pela variação natural (ruído) das suas respostas. Quanto mais distante de zero (positivo ou negativo), maior foi a mudança entre os dois testes.',
+        scale: [
+            { label: 't > +2,0 (Ficou mais rápido)', bg: '#dcfce7', color: '#15803d' },
+            { label: '-2,0 a +2,0 (Oscilação normal)', bg: '#f1f5f9', color: '#475569' },
+            { label: 't < -2,0 (Ficou mais lento)', bg: '#fee2e2', color: '#b91c1c' }
+        ],
+        example: 'Exemplo: Seu resultado de t = -0,391 está muito perto de zero. Imagine dois corredores que terminam uma prova quase empatados, mas na segunda corrida um deles tropeça em uma única pedra (como o estímulo T9). O sinal negativo (-0,391) mostra que a 2ª bateria teve média ligeiramente maior, mas como está perto de 0, o ritmo geral foi praticamente idêntico.'
+    },
+    'p_value': {
+        category: 'Confiabilidade Estatística • Teste de Hipótese',
+        title: 'Valor de p (p-value)',
+        concept: 'Indica a probabilidade de que a diferença entre suas baterias tenha acontecido por puro acaso (sorte ou distração momentânea). Na ciência, adotamos o corte de 0,05 (5%).',
+        scale: [
+            { label: 'p < 0,05 (Mudança Real Comprovada)', bg: '#dcfce7', color: '#15803d' },
+            { label: '0,05 a 0,10 (Tendência Marginal)', bg: '#fef3c7', color: '#b45309' },
+            { label: 'p > 0,05 (Variação Casual)', bg: '#f1f5f9', color: '#475569' }
+        ],
+        example: 'Exemplo: Um p = 0,7024 significa 70,2% de chance de a diferença entre o Teste 1 e o Teste 2 ser apenas oscilação natural do momento. Para dizermos cientificamente que você mudou de patamar, esse número precisaria cair para menos de 0,05 (5%).'
+    },
+    'mean_diff': {
+        category: 'Cinética Cronométrica • Ganho de Treino',
+        title: 'Diferença Média (Bateria 1 − Bateria 2)',
+        concept: 'Subtrai o tempo médio da Bateria 2 do tempo médio da Bateria 1. Se o resultado for positivo (+), você economizou tempo na segunda vez; se for negativo (−), a segunda vez levou alguns milissegundos a mais.',
+        scale: [
+            { label: 'Valor Positivo (+): Ganho de Velocidade', bg: '#dcfce7', color: '#15803d' },
+            { label: 'Próximo de 0 ms: Estável', bg: '#f1f5f9', color: '#475569' },
+            { label: 'Valor Negativo (−): Pico de Hesitação', bg: '#fee2e2', color: '#b91c1c' }
+        ],
+        example: 'Exemplo: Se na Bateria 1 sua média foi 1.140 ms e na Bateria 2 foi 1.239 ms, a conta (1.140 − 1.239) resulta em -99,1 ms. Basta um único estímulo difícil (como demorar 4 segundos no T9) para puxar a média da Bateria 2 em quase 100 ms para baixo!'
+    },
+    'decision': {
+        category: 'Veredito do Protocolo • Critério α = 5%',
+        title: 'Decisão Estatística (α = 0,05)',
+        concept: 'Traduz automaticamente o Valor de p em uma conclusão direta: informa se já houve efeito de aprendizagem comprovado entre as baterias ou se o seu desempenho manteve o mesmo padrão.',
+        scale: [
+            { label: 'Evolução Significativa (p < 0,05)', bg: '#dcfce7', color: '#15803d' },
+            { label: 'Sem Variação Significativa (p ≥ 0,05)', bg: '#f1f5f9', color: '#475569' },
+            { label: 'Meta: Reduzir picos em T9–T16', bg: '#dbeafe', color: '#1d4ed8' }
+        ],
+        example: 'Exemplo: "Sem Variação Significativa" NÃO significa um resultado ruim! Significa que seu cérebro já operou em uma velocidade consistente desde a 1ª bateria, sem cair de rendimento.'
+    },
+    'f_stat': {
+        category: 'Análise Longitudinal • One-Way ANOVA',
+        title: 'Estatística F de Snedecor (ANOVA)',
+        concept: 'Quando você faz 3 ou mais baterias, a ANOVA compara todas ao mesmo tempo. O valor F divide a evolução entre os treinos pela oscilação dentro de cada treino.',
+        scale: [
+            { label: 'F Alto (> 3,5): Forte Adaptação', bg: '#dcfce7', color: '#15803d' },
+            { label: 'F Moderado (1,5 a 3,5)', bg: '#fef3c7', color: '#b45309' },
+            { label: 'F Próximo de 1,0: Estabilidade', bg: '#f1f5f9', color: '#475569' }
+        ],
+        example: 'Exemplo: Se você fez 3 baterias com médias 1.400 ms, 1.100 ms e 850 ms, o F será alto (ex.: F = 6,8) com p < 0,05, provando que o treinamento deixou seu cérebro progressivamente mais rápido.'
+    },
+    'stroop_effect': {
+        category: 'Biomarcador Executivo • Atenção Seletiva',
+        title: 'Efeito Stroop (Custo de Interferência)',
+        concept: 'É o coração do teste: mede quantos milissegundos extras seu cérebro gasta para frear o impulso automático de ler a palavra quando a cor da tinta é diferente (Tempo Incongruente menos Tempo Congruente).',
+        scale: [
+            { label: '< 150 ms (Freio Inibitório Rápido)', bg: '#dcfce7', color: '#15803d' },
+            { label: '150 a 400 ms (Interferência Típica)', bg: '#dbeafe', color: '#1d4ed8' },
+            { label: '> 450 ms (Alto Conflito em T9+)', bg: '#fee2e2', color: '#b91c1c' }
+        ],
+        example: 'Exemplo: Se você responde em 900 ms quando a palavra AZUL está pintada de azul, mas leva 1.362 ms quando a palavra VERDE está pintada de vermelho, seu Efeito Stroop é 462 ms. É o tempo exato que seu córtex pré-frontal levou para vencer a "pegadinha" visual.'
+    },
+    'mean_rt': {
+        category: 'Velocidade Sensório-Motora Global',
+        title: 'Tempo Médio Global (ms)',
+        concept: 'Média aritmética do tempo decorrido entre o aparecimento da palavra na tela e o pressionamento da tecla ao longo de todos os 16 estímulos.',
+        scale: [
+            { label: '< 900 ms (Reflexo Rápido)', bg: '#dcfce7', color: '#15803d' },
+            { label: '900 a 1.500 ms (Ritmo Normal)', bg: '#dbeafe', color: '#1d4ed8' },
+            { label: '> 1.500 ms (Foco em Cautela)', bg: '#fef3c7', color: '#b45309' }
+        ],
+        example: 'Exemplo: 1.000 ms equivalem a 1 segundo. Ter 1.191 ms contra 1.525 ms da base significa que você respondeu cerca de um terço de segundo mais rápido que a média dos outros usuários em cada palavra!'
+    },
+    'accuracy': {
+        category: 'Qualidade de Execução • Controle de Erro',
+        title: 'Acurácia (%)',
+        concept: 'Porcentagem de acertos ao longo das 16 tentativas. Avalia se a sua velocidade foi acompanhada de precisão ou se houve respostas impulsivas.',
+        scale: [
+            { label: '90% a 100% (Alta Precisão)', bg: '#dcfce7', color: '#15803d' },
+            { label: '75% a 89% (Moderada)', bg: '#fef3c7', color: '#b45309' },
+            { label: '< 75% (Impulsividade)', bg: '#fee2e2', color: '#b91c1c' }
+        ],
+        example: 'Exemplo: Acertar 15 de 16 estímulos gera 93,8% de acurácia. Na psicometria, buscamos alta velocidade mantendo a acurácia acima de 85%.'
+    },
+    'z_score': {
+        category: 'Posição Padronizada • Curva Normal (Gauss)',
+        title: 'Escore Padronizado (Z-Score)',
+        concept: 'Mostra a quantos desvios-padrão o seu Efeito Stroop está distante da média de todas as pessoas da base. O zero (0,00) representa exatamente a média da plataforma.',
+        scale: [
+            { label: 'Z < 0 (Menos interferência que a média)', bg: '#dcfce7', color: '#15803d' },
+            { label: '-0,5 a +0,5 (Bem no centro da base)', bg: '#dbeafe', color: '#1d4ed8' },
+            { label: 'Z > +1,0 (Acima da média de conflito)', bg: '#fef3c7', color: '#b45309' }
+        ],
+        example: 'Exemplo: Um Z-Score de 0,23 indica que o seu resultado está a apenas 0,23 desvios do centro exato da população (0,00). Qualquer valor entre -1,0 e +1,0 é considerado perfeitamente dentro do padrão esperado.'
+    },
+    'percentile': {
+        category: 'Ranking Populacional Acumulado',
+        title: 'Posição Relativa (Percentil)',
+        concept: 'Posiciona o seu resultado em uma escala de 0% a 100% em relação à distribuição acumulada de todos os voluntários registrados no banco de dados.',
+        scale: [
+            { label: 'Até 40% (Baixo Custo Stroop)', bg: '#dcfce7', color: '#15803d' },
+            { label: '40% a 65% (Faixa Mediana Central)', bg: '#dbeafe', color: '#1d4ed8' },
+            { label: 'Acima de 70% (Alta Latência T9+)', bg: '#fef3c7', color: '#b45309' }
+        ],
+        example: 'Exemplo: Um percentil de 59,0% significa que seu nível de interferência ficou muito próximo da mediana populacional (50%), comportando-se como a maioria típica dos voluntários avaliados.'
+    }
+};
+
+function openMetricDetail(metricKey, userValStr) {
+    const item = METRIC_DICTIONARY[metricKey];
+    if (!item) return;
+
+    document.getElementById('spot-category').textContent = item.category;
+    document.getElementById('spot-title').textContent = item.title;
+    document.getElementById('spot-user-val').textContent = userValStr;
+    document.getElementById('spot-concept').textContent = item.concept;
+    document.getElementById('spot-example').textContent = item.example;
+
+    const scaleContainer = document.getElementById('spot-scale');
+    scaleContainer.innerHTML = item.scale.map(s => `
+        <div class="scale-segment" style="background:${s.bg}; color:${s.color};">
+            ${s.label}
+        </div>
+    `).join('');
+
+    document.getElementById('metricSpotlightModal').classList.add('active');
+}
+
+function closeMetricDetail() {
+    const modal = document.getElementById('metricSpotlightModal');
+    if (modal) modal.classList.remove('active');
+}
+
+function openReportModal() {
+    const modal = document.getElementById('reportModal');
+    if (modal) modal.classList.add('active');
+}
+
+function closeReportModal() {
+    const modal = document.getElementById('reportModal');
+    if (modal) modal.classList.remove('active');
+}
+
+window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        closeMetricDetail();
+        closeReportModal();
+    }
+});
+
+Chart.defaults.color = '#475569';
+Chart.defaults.borderColor = '#e2e8f0';
+Chart.defaults.font.family = "'Inter', -apple-system, BlinkMacSystemFont, sans-serif";
+
+const brFormat = (val) => Number(val).toLocaleString('pt-BR');
+
+const xLabels = {{ x_labels|safe }};
+const userDatasets = {{ overlaid_datasets|safe }};
+const baseTrialSeries = {{ base_trial_series|safe }};
+const cumulativeDatasets = {{ overlaid_cumulative|safe }};
+
+const allOverlaidDatasets = [
+    ...userDatasets,
+    {
+        label: 'Média da Base de Dados (Referência)',
+        data: baseTrialSeries,
+        borderColor: '#64748b',
+        backgroundColor: 'transparent',
+        borderDash: [6, 6],
+        borderWidth: 2,
+        pointRadius: 2,
+        fill: false,
+        tension: 0.25
+    }
+];
+
+new Chart(document.getElementById('chartOverlaidTrials'), {
+    type: 'line',
+    data: {
+        labels: xLabels,
+        datasets: allOverlaidDatasets
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: {
+            mode: 'index',
+            intersect: false
+        },
+        plugins: {
+            legend: {
+                position: 'top',
+                labels: { usePointStyle: true, padding: 16 }
+            },
+            tooltip: {
+                callbacks: {
+                    label: (ctx) => `${ctx.dataset.label}: ${brFormat(ctx.parsed.y)} ms`
+                }
+            }
+        },
+        scales: {
+            y: {
+                min: 0,
+                beginAtZero: true,
+                title: { display: true, text: 'Tempo de Reação (ms)', font: { weight: 'bold' } },
+                ticks: { callback: (v) => brFormat(v) + ' ms' }
+            },
+            x: {
+                title: { display: true, text: 'Sequência de Estímulos do Protocolo (Início em 0)', font: { weight: 'bold' } },
+                grid: { color: '#f1f5f9' }
+            }
+        }
+    }
+});
+
+new Chart(document.getElementById('chartCumulativeOverlaid'), {
+    type: 'line',
+    data: {
+        labels: xLabels,
+        datasets: cumulativeDatasets
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: {
+            mode: 'index',
+            intersect: false
+        },
+        plugins: {
+            legend: {
+                position: 'top',
+                labels: { usePointStyle: true }
+            },
+            tooltip: {
+                callbacks: {
+                    label: (ctx) => `${ctx.dataset.label}: ${brFormat(ctx.parsed.y)} s acumulados`
+                }
+            }
+        },
+        scales: {
+            y: {
+                min: 0,
+                beginAtZero: true,
+                title: { display: true, text: 'Tempo Acumulado (s)', font: { weight: 'bold' } },
+                ticks: { callback: (v) => brFormat(v) + ' s' }
+            },
+            x: {
+                grid: { display: false }
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

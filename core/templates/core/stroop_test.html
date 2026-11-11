@@ -1,0 +1,422 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<style>
+    .stroop-wrapper {
+        max-width: 880px;
+        margin: 2.5rem auto;
+        padding: 0 1.25rem;
+        font-family: inherit;
+        color: #1e293b;
+    }
+    .stroop-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    .stroop-badge {
+        display: inline-block;
+        background: #dbeafe;
+        color: #1d4ed8;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        padding: 0.25rem 0.75rem;
+        border-radius: 999px;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.4rem;
+    }
+    .stroop-title {
+        font-size: 1.75rem;
+        font-weight: 800;
+        color: #0f172a;
+        margin: 0;
+    }
+    .stroop-subtitle {
+        color: #64748b;
+        font-size: 0.95rem;
+        margin-top: 0.25rem;
+    }
+    .stroop-card {
+        background: #ffffff;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(15, 23, 42, 0.06);
+        border: 1px solid #e2e8f0;
+        padding: 2rem;
+        margin-bottom: 1.5rem;
+    }
+    .participant-bar {
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        border-radius: 12px;
+        padding: 1.25rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    .participant-label {
+        display: block;
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #1d4ed8;
+        text-transform: uppercase;
+        margin-bottom: 0.35rem;
+    }
+    .participant-input {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #0f172a;
+        padding: 0.55rem 0.85rem;
+        border: 1px solid #93c5fd;
+        border-radius: 8px;
+        width: 220px;
+        text-transform: uppercase;
+        background: #ffffff;
+    }
+    .protocol-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 1rem;
+        margin: 1.25rem 0;
+    }
+    .protocol-box {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 1.25rem;
+    }
+    .protocol-box h4 {
+        margin: 0 0 0.5rem 0;
+        font-size: 0.95rem;
+        font-weight: 700;
+    }
+    .key-bar {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        justify-content: center;
+        background: #f1f5f9;
+        padding: 1rem;
+        border-radius: 12px;
+        margin: 1.25rem 0;
+    }
+    .key-pill {
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        padding: 0.4rem 0.9rem;
+        font-weight: 700;
+        font-size: 0.85rem;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    }
+    .btn-primary-action {
+        display: inline-block;
+        width: 100%;
+        background: #2563eb;
+        color: #ffffff;
+        font-weight: 700;
+        font-size: 1rem;
+        padding: 0.95rem 1.5rem;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: background 0.2s, transform 0.1s;
+        text-align: center;
+        text-decoration: none;
+    }
+    .btn-primary-action:hover {
+        background: #1d4ed8;
+    }
+    .btn-outline-link {
+        background: #ffffff;
+        color: #2563eb;
+        border: 1px solid #bfdbfe;
+        padding: 0.55rem 1.1rem;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.875rem;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+    .btn-outline-link:hover {
+        background: #eff6ff;
+        border-color: #93c5fd;
+    }
+    .arena-meta {
+        display: flex;
+        justify-content: space-between;
+        color: #64748b;
+        font-size: 0.875rem;
+        font-weight: 600;
+        border-bottom: 1px solid #f1f5f9;
+        padding-bottom: 0.75rem;
+    }
+    .stimulus-stage {
+        height: 220px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 1rem 0;
+        background: #f8fafc;
+        border-radius: 12px;
+        border: 1px dashed #cbd5e1;
+    }
+    .stimulus-text {
+        font-size: 4rem;
+        font-weight: 900;
+        letter-spacing: 3px;
+        user-select: none;
+    }
+    .response-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.75rem;
+    }
+    .btn-color-choice {
+        background: #ffffff;
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 0.9rem 0.5rem;
+        font-weight: 700;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: all 0.15s;
+    }
+    .btn-color-choice:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    }
+    .btn-red { color: #dc2626; border-color: #fecaca; }
+    .btn-red:hover { background: #fef2f2; border-color: #dc2626; }
+    .btn-blue { color: #2563eb; border-color: #bfdbfe; }
+    .btn-blue:hover { background: #eff6ff; border-color: #2563eb; }
+    .btn-green { color: #16a34a; border-color: #bbf7d0; }
+    .btn-green:hover { background: #f0fdf4; border-color: #16a34a; }
+    .btn-yellow { color: #d97706; border-color: #fde68a; }
+    .btn-yellow:hover { background: #fffbeb; border-color: #d97706; }
+    .hidden { display: none !important; }
+</style>
+
+<div class="stroop-wrapper">
+    <div class="stroop-header">
+        <div>
+            <span class="stroop-badge">Neurociência & Psicometria</span>
+            <h1 class="stroop-title">Teste de Stroop: Controle Inibitório</h1>
+            <p class="stroop-subtitle">Avaliação cronométrica de atenção seletiva e tempo de reação em milissegundos.</p>
+        </div>
+        <a href="{% url 'stroop_analytics' %}" class="btn-outline-link">Ver Séries Temporais & Estatísticas →</a>
+    </div>
+
+    <!-- Instruções e Identificação do Participante -->
+    <div id="instructions-card" class="stroop-card">
+        <div class="participant-bar">
+            <div>
+                <label for="participant-input" class="participant-label">
+                    Identificador do Participante (ID ou Apelido):
+                </label>
+                <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 0.65rem;">
+                    <input type="text" id="participant-input" class="participant-input"
+                           value="{{ participant_code|default:suggested_code }}"
+                           placeholder="Ex: VOL-1024">
+                    {% if participant_code %}
+                        <span style="font-size: 0.85rem; color: #475569;">
+                            (<strong>{{ user_sessions_count }}</strong> bateria(s) registrada(s) neste ID)
+                        </span>
+                    {% else %}
+                        <span style="font-size: 0.85rem; color: #475569;">
+                            (Novo participante sugerido)
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+            <div>
+                <a href="{% url 'stroop_test' %}?novo=1" style="font-size: 0.85rem; color: #dc2626; font-weight: 700; text-decoration: none; background: #ffffff; padding: 0.5rem 0.85rem; border-radius: 8px; border: 1px solid #fecaca; display: inline-block;">
+                    ↺ Trocar / Gerar Novo ID
+                </a>
+            </div>
+        </div>
+
+        <h3 style="margin-top:0; font-size: 1.2rem; color: #0f172a;">Protocolo de Execução</h3>
+        <p style="color: #475569; line-height: 1.6;">
+            Indique o mais rápido possível a <strong>COR DA TINTA</strong> em que a palavra está exibida, ignorando o texto escrito. Para avaliar sua evolução em um protocolo de treinamento (<strong>Teste t Pareado</strong> com 2 sessões ou <strong>ANOVA</strong> com 3+ sessões), mantenha o mesmo Identificador de Participante acima.
+        </p>
+
+        <div class="protocol-grid">
+            <div class="protocol-box">
+                <h4 style="color: #16a34a;">● Bloco 1: Congruente e Neutro (8 trilhas)</h4>
+                <p style="margin:0; font-size: 0.875rem; color: #64748b;">
+                    Estímulos facilitadores ou neutros para linha de base motora (ex.: palavra <strong style="color:#dc2626;">VERMELHO</strong> pintada de vermelho).
+                </p>
+            </div>
+            <div class="protocol-box">
+                <h4 style="color: #dc2626;">● Bloco 2: Incongruente / Interferência (8 trilhas)</h4>
+                <p style="margin:0; font-size: 0.875rem; color: #64748b;">
+                    Conflito cognitivo direto exigindo inibição da leitura automática (ex.: palavra <strong style="color:#2563eb;">VERMELHO</strong> pintada de azul).
+                </p>
+            </div>
+        </div>
+
+        <div class="key-bar">
+            <span class="key-pill" style="color:#dc2626;">Tecla [V] Vermelho</span>
+            <span class="key-pill" style="color:#2563eb;">Tecla [A] Azul</span>
+            <span class="key-pill" style="color:#16a34a;">Tecla [E] Verde</span>
+            <span class="key-pill" style="color:#d97706;">Tecla [F] Amarelo</span>
+        </div>
+
+        <button id="btn-start" class="btn-primary-action">Iniciar Protocolo Experimental</button>
+    </div>
+
+    <!-- Arena do Teste -->
+    <div id="experiment-area" class="stroop-card hidden">
+        <div class="arena-meta">
+            <span id="trial-counter">Estímulo: 1 / 16</span>
+            <span id="active-user-badge" style="color: #0f172a;">ID: ---</span>
+            <span id="block-indicator" style="color: #2563eb;">Bloco 1: Basal</span>
+        </div>
+
+        <div class="stimulus-stage">
+            <div id="fixation-cross" class="stimulus-text" style="color: #94a3b8; font-weight: 400;">+</div>
+            <div id="stimulus-word" class="stimulus-text hidden">PALAVRA</div>
+        </div>
+
+        <div class="response-grid">
+            <button class="btn-color-choice btn-red" onclick="handleInput('vermelho')">Vermelho<br><small style="font-weight:500; opacity:0.8;">[V]</small></button>
+            <button class="btn-color-choice btn-blue" onclick="handleInput('azul')">Azul<br><small style="font-weight:500; opacity:0.8;">[A]</small></button>
+            <button class="btn-color-choice btn-green" onclick="handleInput('verde')">Verde<br><small style="font-weight:500; opacity:0.8;">[E]</small></button>
+            <button class="btn-color-choice btn-yellow" onclick="handleInput('amarelo')">Amarelo<br><small style="font-weight:500; opacity:0.8;">[M]</small></button>
+        </div>
+    </div>
+</div>
+
+<script>
+const COLOR_HEX = {
+    'vermelho': '#dc2626',
+    'azul': '#2563eb',
+    'verde': '#16a34a',
+    'amarelo': '#d97706'
+};
+
+const PROTOCOL_TRIALS = [
+    { block: 1, word: 'VERMELHO', color: 'vermelho', condition: 'congruent' },
+    { block: 1, word: 'MESA', color: 'azul', condition: 'neutral' },
+    { block: 1, word: 'AZUL', color: 'azul', condition: 'congruent' },
+    { block: 1, word: 'LIVRO', color: 'verde', condition: 'neutral' },
+    { block: 1, word: 'VERDE', color: 'verde', condition: 'congruent' },
+    { block: 1, word: 'PORTA', color: 'amarelo', condition: 'neutral' },
+    { block: 1, word: 'AMARELO', color: 'amarelo', condition: 'congruent' },
+    { block: 1, word: 'JANELA', color: 'vermelho', condition: 'neutral' },
+
+    { block: 2, word: 'VERDE', color: 'vermelho', condition: 'incongruent' },
+    { block: 2, word: 'AMARELO', color: 'azul', condition: 'incongruent' },
+    { block: 2, word: 'AZUL', color: 'verde', condition: 'incongruent' },
+    { block: 2, word: 'VERMELHO', color: 'amarelo', condition: 'incongruent' },
+    { block: 2, word: 'AMARELO', color: 'verde', condition: 'incongruent' },
+    { block: 2, word: 'VERDE', color: 'azul', condition: 'incongruent' },
+    { block: 2, word: 'AZUL', color: 'vermelho', condition: 'incongruent' },
+    { block: 2, word: 'VERMELHO', color: 'azul', condition: 'incongruent' },
+];
+
+let currentTrialIdx = 0;
+let trialStartTime = 0;
+let recordedTrials = [];
+let awaitingResponse = false;
+let currentParticipant = '';
+
+document.getElementById('btn-start').addEventListener('click', () => {
+    const inputEl = document.getElementById('participant-input');
+    currentParticipant = (inputEl.value.trim() || 'ANONIMO').toUpperCase();
+    document.getElementById('active-user-badge').textContent = `Participante: ${currentParticipant}`;
+
+    document.getElementById('instructions-card').classList.add('hidden');
+    document.getElementById('experiment-area').classList.remove('hidden');
+    runNextTrial();
+});
+
+function runNextTrial() {
+    if (currentTrialIdx >= PROTOCOL_TRIALS.length) {
+        finishExperiment();
+        return;
+    }
+
+    const stimulus = PROTOCOL_TRIALS[currentTrialIdx];
+    const wordEl = document.getElementById('stimulus-word');
+    const crossEl = document.getElementById('fixation-cross');
+    
+    document.getElementById('trial-counter').textContent = `Estímulo: ${currentTrialIdx + 1} de ${PROTOCOL_TRIALS.length}`;
+    const blockInd = document.getElementById('block-indicator');
+    if (stimulus.block === 1) {
+        blockInd.textContent = 'Bloco 1: Basal (Congruente / Neutro)';
+        blockInd.style.color = '#16a34a';
+    } else {
+        blockInd.textContent = 'Bloco 2: Interferência (Incongruente)';
+        blockInd.style.color = '#dc2626';
+    }
+
+    wordEl.classList.add('hidden');
+    crossEl.classList.remove('hidden');
+    awaitingResponse = false;
+
+    setTimeout(() => {
+        crossEl.classList.add('hidden');
+        wordEl.textContent = stimulus.word;
+        wordEl.style.color = COLOR_HEX[stimulus.color];
+        wordEl.classList.remove('hidden');
+        
+        trialStartTime = performance.now();
+        awaitingResponse = true;
+    }, 450);
+}
+
+function handleInput(selectedColor) {
+    if (!awaitingResponse) return;
+    const rt = performance.now() - trialStartTime;
+    awaitingResponse = false;
+
+    const currentTrial = PROTOCOL_TRIALS[currentTrialIdx];
+    const isCorrect = (selectedColor === currentTrial.color);
+
+    recordedTrials.push({
+        ...currentTrial,
+        response: selectedColor,
+        rt: rt,
+        correct: isCorrect
+    });
+
+    currentTrialIdx++;
+    runNextTrial();
+}
+
+window.addEventListener('keydown', (e) => {
+    const key = e.key.toLowerCase();
+    if (key === 'v') handleInput('vermelho');
+    if (key === 'a') handleInput('azul');
+    if (key === 'e') handleInput('verde');
+    if (key === 'f') handleInput('amarelo');
+});
+
+function finishExperiment() {
+    document.getElementById('experiment-area').innerHTML = `
+        <div style="text-align:center; padding: 3rem 1rem;">
+            <h3 style="color:#2563eb; margin-bottom:0.5rem;">Processando Série Temporal...</h3>
+            <p style="color:#64748b;">Consolidando resultados exclusivos do participante <strong>${currentParticipant}</strong>.</p>
+        </div>
+    `;
+
+    fetch('/stroop/submit/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            participant_code: currentParticipant,
+            trials: recordedTrials
+        })
+    }).then(res => res.json()).then(() => {
+        window.location.href = '/stroop/analytics/';
+    });
+}
+</script>
+{% endblock %}

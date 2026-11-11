@@ -177,9 +177,9 @@
             Engenharia Biomédica ▾
           </button>
           <div class="dropdown-content">
-            <a href="{% url 'lab_dsp' %}">📟 Osciloscópio & DSP</a>
-            <a href="{% url 'lab_vcg' %}">🩺 Vetorcardiograma 3D</a>
-            <a href="{% url 'lab_duckdb' %}">🔬 Mineração PubMed 📊 DuckDB-WASM Saúde PLN</a>
+            <a href="{% url 'lab_dsp' %}">Osciloscópio & DSP</a>
+            <!-- <a href="{% url 'lab_vcg' %}"> Vetorcardiograma 3D</a> -->
+            <a href="{% url 'lab_duckdb' %}">Mineração no PubMed</a>
           </div>
         </div>
 
@@ -191,7 +191,7 @@
           <a href="{% url 'admin:index' %}" class="btn-login">Admin</a>
           <a href="{% url 'logout' %}" class="btn-login">Sair</a>
         {% else %}
-          <a href="{% url 'login' %}" class="btn-login">Entrar</a>
+          <!-- <a href="{% url 'login' %}" class="btn-login">Entrar</a> -->
         {% endif %}
       </nav>
     </div>

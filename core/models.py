@@ -53,3 +53,21 @@ class StroopTrial(models.Model):
 
     def __str__(self):
         return f"{self.condition} - {self.reaction_time_ms}ms"
+
+
+
+from django.db import models
+
+class SolicitacaoProjeto(models.Model):
+    cliente_nome = models.CharField("Nome / Empresa", max_length=150)
+    cliente_email = models.EmailField("E-mail de Contato")
+    estrutura_json = models.JSONField("Arquitetura das Páginas")
+    criado_em = models.DateTimeField("Data da Solicitação", auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Solicitação de Projeto"
+        verbose_name_plural = "Solicitações de Projetos"
+        ordering = ['-criado_em']
+
+    def __str__(self):
+        return f"{self.cliente_nome} ({self.criado_em.strftime('%d/%m/%Y')})"

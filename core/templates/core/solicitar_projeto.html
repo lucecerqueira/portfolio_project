@@ -1,0 +1,724 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Solicitar Projeto | Lucenildo Silva Cerqueira, DSc.{% endblock %}
+
+{% block content %}
+<style>
+  .builder-header {
+    margin-bottom: 30px;
+    border-bottom: 1.5px solid var(--border-clay);
+    padding-bottom: 16px;
+  }
+  .builder-header h1 {
+    font-size: 2rem;
+    color: var(--text-primary);
+    font-weight: 800;
+  }
+  .builder-header p {
+    color: var(--text-secondary);
+    margin-top: 8px;
+    font-size: 0.98rem;
+  }
+  .helper-badge {
+    display: inline-block;
+    margin-top: 12px;
+    background-color: var(--accent-glow);
+    color: var(--accent);
+    border: 1px solid rgba(43, 108, 176, 0.25);
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+
+  /* GRID DE CARDS ESTILO DIAGRAMA UML / CLAYMORPHIC */
+  .uml-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+    gap: 24px;
+    margin-bottom: 30px;
+  }
+
+  .uml-card {
+    background-color: var(--surface);
+    border: 2px solid var(--border-strong);
+    border-radius: 14px;
+    box-shadow: var(--clay-shadow);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.2s ease;
+  }
+
+  .uml-top {
+    background-color: var(--bg-secondary);
+    padding: 14px 16px;
+    border-bottom: 2px solid var(--border-strong);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+  }
+  .uml-top input {
+    width: 100%;
+    background: #ffffff;
+    border: 1.5px solid var(--border-clay);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-weight: 800;
+    font-size: 1rem;
+    color: var(--accent);
+    text-align: center;
+  }
+  .btn-remove-card {
+    background: #e53e3e;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    width: 28px;
+    height: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .btn-remove-card:hover { background: #c53030; }
+
+  .uml-section {
+    padding: 16px;
+    border-bottom: 2px solid var(--border-strong);
+    flex: 1;
+  }
+  .uml-section:last-child { border-bottom: none; }
+  .uml-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-secondary);
+    font-weight: 800;
+    margin-bottom: 10px;
+    display: block;
+  }
+
+  .item-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .item-prefix {
+    font-family: monospace;
+    font-weight: 900;
+    color: var(--accent);
+    font-size: 1rem;
+  }
+  .item-row input {
+    width: 100%;
+    background: #ffffff;
+    border: 1px solid var(--border-clay);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 0.88rem;
+    color: var(--text-primary);
+  }
+
+  .btn-add-line {
+    background: transparent;
+    border: 1px dashed var(--accent);
+    color: var(--accent);
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 5px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-top: 4px;
+    width: 100%;
+  }
+  .btn-add-line:hover { background: var(--accent-glow); }
+
+  /* BARRA DE AÇÕES GERAIS */
+  .builder-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--surface);
+    padding: 20px 24px;
+    border-radius: 16px;
+    border: 1.5px solid var(--border-clay);
+    box-shadow: var(--clay-shadow);
+  }
+  .btn-primary-clay {
+    background-color: var(--accent);
+    color: #ffffff;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    box-shadow: var(--clay-button);
+    transition: background 0.2s ease;
+  }
+  .btn-primary-clay:hover { background-color: var(--accent-hover); }
+  .btn-success-clay {
+    background-color: #2f855a;
+    color: #ffffff;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    box-shadow: var(--clay-button);
+  }
+  .btn-success-clay:hover { background-color: #276749; }
+
+  .client-info {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    flex: 1;
+    justify-content: flex-end;
+  }
+  .client-info input {
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1.5px solid var(--border-clay);
+    font-size: 0.9rem;
+    min-width: 210px;
+  }
+
+  /* --- ESTILOS DO MODAL POP-UP (WIREFRAME INTERATIVO) --- */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(26, 32, 44, 0.72);
+    backdrop-filter: blur(5px);
+    z-index: 2000;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .modal-overlay.active {
+    display: flex;
+  }
+  .modal-window {
+    background-color: var(--bg-primary);
+    border: 2px solid var(--border-strong);
+    border-radius: 18px;
+    width: 100%;
+    max-width: 920px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.35);
+    overflow: hidden;
+  }
+  .modal-header {
+    background-color: var(--surface);
+    padding: 16px 24px;
+    border-bottom: 1.5px solid var(--border-clay);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .modal-header h2 {
+    font-size: 1.2rem;
+    color: var(--text-primary);
+    font-weight: 800;
+  }
+  .modal-close {
+    background: transparent;
+    border: none;
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--text-secondary);
+    cursor: pointer;
+    line-height: 1;
+  }
+  .modal-body {
+    padding: 24px;
+    overflow-y: auto;
+    flex: 1;
+  }
+
+  /* SIMULADOR DE NAVEGADOR (MOCKUP DO SITE) */
+  .browser-mockup {
+    background-color: #ffffff;
+    border: 2px solid var(--border-strong);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: var(--clay-shadow);
+  }
+  .browser-bar {
+    background-color: var(--bg-secondary);
+    padding: 10px 16px;
+    border-bottom: 1.5px solid var(--border-clay);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .browser-dots {
+    display: flex;
+    gap: 6px;
+  }
+  .browser-dots span {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .browser-url {
+    background: #ffffff;
+    border: 1px solid var(--border-clay);
+    border-radius: 6px;
+    padding: 4px 12px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    flex: 1;
+    font-family: monospace;
+  }
+
+  /* MENU SIMULADO DO SITE DO CLIENTE */
+  .sim-navbar {
+    background-color: var(--surface);
+    padding: 14px 20px;
+    border-bottom: 1.5px solid var(--border-clay);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .sim-brand {
+    font-weight: 800;
+    color: var(--text-primary);
+    font-size: 1rem;
+  }
+  .sim-tabs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .sim-tab-btn {
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border-clay);
+    background: #ffffff;
+    color: var(--text-secondary);
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .sim-tab-btn.active {
+    background: var(--accent);
+    color: #ffffff;
+    border-color: var(--accent);
+  }
+
+  /* CORPO SIMULADO DA PÁGINA */
+  .sim-content {
+    padding: 28px 24px;
+    background-color: #f8fafc;
+    min-height: 260px;
+  }
+  .sim-page-title {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-bottom: 18px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--accent);
+    display: inline-block;
+  }
+  .sim-blocks-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  .sim-block {
+    background: #ffffff;
+    border: 1.5px dashed var(--border-strong);
+    border-radius: 10px;
+    padding: 16px;
+    font-size: 0.88rem;
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+  .sim-block-tag {
+    display: block;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 800;
+    margin-bottom: 4px;
+  }
+  .sim-actions-area {
+    background: var(--bg-secondary);
+    padding: 14px 18px;
+    border-radius: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+  }
+  .sim-action-pill {
+    background: var(--accent);
+    color: #ffffff;
+    padding: 7px 14px;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-weight: 700;
+  }
+
+  .modal-footer {
+    background-color: var(--surface);
+    padding: 16px 24px;
+    border-top: 1.5px solid var(--border-clay);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  @media (max-width: 768px) {
+    .client-info {
+      justify-content: stretch;
+      width: 100%;
+    }
+    .client-info input, .btn-primary-clay {
+      width: 100%;
+    }
+    .modal-footer {
+      flex-direction: column-reverse;
+    }
+    .modal-footer button {
+      width: 100%;
+    }
+  }
+</style>
+
+<div class="builder-header">
+  <h1>Monte a Estrutura do Seu Site</h1>
+  <p>Não precisa saber programar. Preparamos <strong>3 páginas essenciais como exemplo</strong> abaixo. Edite os textos, apague o que não precisar ou adicione novas páginas. Ao clicar em enviar, você poderá <strong>visualizar o protótipo montado</strong> antes de confirmar.</p>
+  <span class="helper-badge"> Dica: Cada cartão abaixo representa uma página do seu futuro site.</span>
+</div>
+
+{% if messages %}
+  {% for message in messages %}
+    <div style="background: #c6f6d5; color: #22543d; padding: 14px 20px; border-radius: 10px; border: 1.5px solid #9ae6b4; margin-bottom: 24px; font-weight: 700;">
+      {{ message }}
+    </div>
+  {% endfor %}
+{% endif %}
+
+<form id="siteBuilderForm" method="POST">
+  {% csrf_token %}
+  <input type="hidden" name="estrutura_json" id="estrutura_json">
+
+  <div class="uml-grid" id="cardsContainer">
+    <!-- CARD 1: PÁGINA INICIAL (HOME) -->
+    <div class="uml-card">
+      <div class="uml-top">
+        <input type="text" class="page-name" value="1. Página Inicial (Home)" placeholder="Nome da Página" required>
+        <button type="button" class="btn-remove-card" onclick="removerCard(this)" title="Remover página">×</button>
+      </div>
+
+      <div class="uml-section content-list">
+        <span class="uml-label">Conteúdos (O que aparece na tela)</span>
+        <div class="item-row">
+          <span class="item-prefix">-</span>
+          <input type="text" class="content-input" value="Apresentação principal com foto ou logo">
+        </div>
+        <div class="item-row">
+          <span class="item-prefix">-</span>
+          <input type="text" class="content-input" value="Resumo dos principais serviços ou produtos">
+        </div>
+        <div class="item-row">
+          <span class="item-prefix">-</span>
+          <input type="text" class="content-input" value="Depoimentos de clientes ou parceiros">
+        </div>
+        <button type="button" class="btn-add-line" onclick="adicionarLinha(this, 'content-input', '-', 'Novo conteúdo...')">+ Adicionar conteúdo</button>
+      </div>
+
+      <div class="uml-section action-list">
+        <span class="uml-label">Funcionalidades (O que o visitante faz)</span>
+        <div class="item-row">
+          <span class="item-prefix">+</span>
+          <input type="text" class="action-input" value="Clicar no botão direto para o WhatsApp">
+        </div>
+        <div class="item-row">
+          <span class="item-prefix">+</span>
+          <input type="text" class="action-input" value="Navegar para outras páginas pelo menu">
+        </div>
+        <button type="button" class="btn-add-line" onclick="adicionarLinha(this, 'action-input', '+', 'Nova funcionalidade...')">+ Adicionar funcionalidade</button>
+      </div>
+    </div>
+
+    <!-- CARD 2: FEED / PUBLICAÇÕES / PORTFÓLIO -->
+    <div class="uml-card">
+      <div class="uml-top">
+        <input type="text" class="page-name" value="2. Feed de Novidades / Projetos" placeholder="Nome da Página" required>
+        <button type="button" class="btn-remove-card" onclick="removerCard(this)" title="Remover página">×</button>
+      </div>
+
+      <div class="uml-section content-list">
+        <span class="uml-label">Conteúdos (O que aparece na tela)</span>
+        <div class="item-row">
+          <span class="item-prefix">-</span>
+          <input type="text" class="content-input" value="Lista de artigos, notícias ou trabalhos realizados">
+        </div>
+        <div class="item-row">
+          <span class="item-prefix">-</span>
+          <input type="text" class="content-input" value="Imagens de capa, título e data de publicação">
+        </div>
+        <button type="button" class="btn-add-line" onclick="adicionarLinha(this, 'content-input', '-', 'Novo conteúdo...')">+ Adicionar conteúdo</button>
+      </div>
+
+      <div class="uml-section action-list">
+        <span class="uml-label">Funcionalidades (O que o visitante faz)</span>
+        <div class="item-row">
+          <span class="item-prefix">+</span>
+          <input type="text" class="action-input" value="Filtrar publicações por categoria ou assunto">
+        </div>
+        <div class="item-row">
+          <span class="item-prefix">+</span>
+          <input type="text" class="action-input" value="Abrir a publicação completa para leitura">
+        </div>
+        <button type="button" class="btn-add-line" onclick="adicionarLinha(this, 'action-input', '+', 'Nova funcionalidade...')">+ Adicionar funcionalidade</button>
+      </div>
+    </div>
+
+    <!-- CARD 3: PÁGINA DE CONTATO -->
+    <div class="uml-card">
+      <div class="uml-top">
+        <input type="text" class="page-name" value="3. Contato e Localização" placeholder="Nome da Página" required>
+        <button type="button" class="btn-remove-card" onclick="removerCard(this)" title="Remover página">×</button>
+      </div>
+
+      <div class="uml-section content-list">
+        <span class="uml-label">Conteúdos (O que aparece na tela)</span>
+        <div class="item-row">
+          <span class="item-prefix">-</span>
+          <input type="text" class="content-input" value="Formulário simples (Nome, E-mail e Mensagem)">
+        </div>
+        <div class="item-row">
+          <span class="item-prefix">-</span>
+          <input type="text" class="content-input" value="Links para redes sociais, telefone e mapa">
+        </div>
+        <button type="button" class="btn-add-line" onclick="adicionarLinha(this, 'content-input', '-', 'Novo conteúdo...')">+ Adicionar conteúdo</button>
+      </div>
+
+      <div class="uml-section action-list">
+        <span class="uml-label">Funcionalidades (O que o visitante faz)</span>
+        <div class="item-row">
+          <span class="item-prefix">+</span>
+          <input type="text" class="action-input" value="Enviar mensagem direto para o meu e-mail">
+        </div>
+        <button type="button" class="btn-add-line" onclick="adicionarLinha(this, 'action-input', '+', 'Nova funcionalidade...')">+ Adicionar funcionalidade</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="builder-actions">
+    <button type="button" class="btn-link" onclick="criarNovoCard()">+ Adicionar Nova Página</button>
+    
+    <div class="client-info">
+      <input type="text" id="cliente_nome" name="cliente_nome" placeholder="Seu Nome ou Empresa" required>
+      <input type="email" id="cliente_email" name="cliente_email" placeholder="Seu E-mail de Contato" required>
+      <button type="button" class="btn-primary-clay" onclick="abrirPreviewModal()">Visualizar e Enviar Estrutura</button>
+    </div>
+  </div>
+</form>
+
+<!-- POP-UP (MODAL) DE PRÉ-VISUALIZAÇÃO DO SITE MONTADO -->
+<div class="modal-overlay" id="previewModal">
+  <div class="modal-window">
+    <div class="modal-header">
+      <h2>Pré-visualização da Estrutura do Seu Site</h2>
+      <button type="button" class="modal-close" onclick="fecharPreviewModal()">×</button>
+    </div>
+
+    <div class="modal-body">
+      <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 16px;">
+        Clique nas abas do menu abaixo para navegar entre as páginas que você montou e conferir se está tudo certo antes de enviar:
+      </p>
+
+      <div class="browser-mockup">
+        <div class="browser-bar">
+          <div class="browser-dots">
+            <span style="background: #fc8181;"></span>
+            <span style="background: #f6e05e;"></span>
+            <span style="background: #68d391;"></span>
+          </div>
+          <div class="browser-url" id="simUrlBar">https://www.seusite.com.br/</div>
+        </div>
+
+        <div class="sim-navbar">
+          <div class="sim-brand" id="simBrandName">Seu Site</div>
+          <div class="sim-tabs" id="simNavTabs">
+            <!-- Abas geradas dinamicamente via JS -->
+          </div>
+        </div>
+
+        <div class="sim-content" id="simPageCanvas">
+          <!-- Conteúdo simulado da página selecionada -->
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button type="button" class="btn-link" onclick="fecharPreviewModal()">← Voltar e Editar Cartões</button>
+      <button type="button" class="btn-success-clay" onclick="confirmarEnvioFormulario()">✓ Confirmar e Enviar Projeto</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let paginasMontadas = [];
+
+  function adicionarLinha(btn, inputClass, prefix, placeholder) {
+    const row = document.createElement('div');
+    row.className = 'item-row';
+    row.innerHTML = `
+      <span class="item-prefix">${prefix}</span>
+      <input type="text" class="${inputClass}" placeholder="${placeholder}">
+    `;
+    btn.parentNode.insertBefore(row, btn);
+  }
+
+  function criarNovoCard() {
+    const container = document.getElementById('cardsContainer');
+    const totalCards = container.querySelectorAll('.uml-card').length + 1;
+    const card = document.createElement('div');
+    card.className = 'uml-card';
+    card.innerHTML = `
+      <div class="uml-top">
+        <input type="text" class="page-name" placeholder="${totalCards}. Nome da Nova Página (ex: Sobre Nós)" required>
+        <button type="button" class="btn-remove-card" onclick="removerCard(this)" title="Remover página">×</button>
+      </div>
+      <div class="uml-section content-list">
+        <span class="uml-label">Conteúdos (O que aparece na tela)</span>
+        <div class="item-row">
+          <span class="item-prefix">-</span>
+          <input type="text" class="content-input" placeholder="Ex: Texto explicativo ou galeria">
+        </div>
+        <button type="button" class="btn-add-line" onclick="adicionarLinha(this, 'content-input', '-', 'Novo conteúdo...')">+ Adicionar conteúdo</button>
+      </div>
+      <div class="uml-section action-list">
+        <span class="uml-label">Funcionalidades (O que o visitante faz)</span>
+        <div class="item-row">
+          <span class="item-prefix">+</span>
+          <input type="text" class="action-input" placeholder="Ex: Baixar catálogo em PDF">
+        </div>
+        <button type="button" class="btn-add-line" onclick="adicionarLinha(this, 'action-input', '+', 'Nova funcionalidade...')">+ Adicionar funcionalidade</button>
+      </div>
+    `;
+    container.appendChild(card);
+  }
+
+  function removerCard(btn) {
+    const cards = document.querySelectorAll('.uml-card');
+    if (cards.length > 1) {
+      btn.closest('.uml-card').remove();
+    } else {
+      alert('O projeto precisa ter pelo menos uma página.');
+    }
+  }
+
+  function coletarDadosDosCards() {
+    const paginas = [];
+    document.querySelectorAll('.uml-card').forEach((card, index) => {
+      const nome = card.querySelector('.page-name').value.trim() || `Página ${index + 1}`;
+      const conteudos = Array.from(card.querySelectorAll('.content-input'))
+                             .map(i => i.value.trim()).filter(v => v !== '');
+      const acoes = Array.from(card.querySelectorAll('.action-input'))
+                         .map(i => i.value.trim()).filter(v => v !== '');
+      paginas.push({ pagina: nome, conteudos: conteudos, funcionalidades: acoes });
+    });
+    return paginas;
+  }
+
+  function abrirPreviewModal() {
+    const form = document.getElementById('siteBuilderForm');
+    if (!form.reportValidity()) {
+      return; // Exige preenchimento de Nome e E-mail antes de abrir o preview
+    }
+
+    paginasMontadas = coletarDadosDosCards();
+    document.getElementById('estrutura_json').value = JSON.stringify(paginasMontadas, null, 2);
+
+    const nomeCliente = document.getElementById('cliente_nome').value.trim();
+    document.getElementById('simBrandName').textContent = nomeCliente || 'Seu Site';
+
+    const tabsContainer = document.getElementById('simNavTabs');
+    tabsContainer.innerHTML = '';
+
+    paginasMontadas.forEach((pag, idx) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'sim-tab-btn' + (idx === 0 ? ' active' : '');
+      btn.textContent = pag.pagina;
+      btn.onclick = () => renderizarPaginaSimulada(idx);
+      tabsContainer.appendChild(btn);
+    });
+
+    renderizarPaginaSimulada(0);
+    document.getElementById('previewModal').classList.add('active');
+  }
+
+  function renderizarPaginaSimulada(index) {
+    // Atualiza aba ativa
+    document.querySelectorAll('.sim-tab-btn').forEach((b, i) => {
+      b.classList.toggle('active', i === index);
+    });
+
+    const pag = paginasMontadas[index];
+    const slug = pag.pagina.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    document.getElementById('simUrlBar').textContent = `https://www.seusite.com.br/${index === 0 ? '' : slug}`;
+
+    const canvas = document.getElementById('simPageCanvas');
+    
+    let blocosHtml = '';
+    if (pag.conteudos.length > 0) {
+      blocosHtml = `<div class="sim-blocks-grid">` + pag.conteudos.map((item, i) => `
+        <div class="sim-block">
+          <span class="sim-block-tag">Seção ${i + 1}</span>
+          ${item}
+        </div>
+      `).join('') + `</div>`;
+    } else {
+      blocosHtml = `<p style="color: var(--text-secondary); font-size: 0.88rem; margin-bottom: 20px;">Nenhum bloco de conteúdo específico adicionado nesta página.</p>`;
+    }
+
+    let acoesHtml = '';
+    if (pag.funcionalidades.length > 0) {
+      acoesHtml = `
+        <div class="sim-actions-area">
+          <span style="font-size: 0.78rem; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; width: 100%;">Interações disponíveis nesta página:</span>
+          ${pag.funcionalidades.map(ac => `<span class="sim-action-pill">⚡ ${ac}</span>`).join('')}
+        </div>
+      `;
+    }
+
+    canvas.innerHTML = `
+      <div class="sim-page-title">${pag.pagina}</div>
+      ${blocosHtml}
+      ${acoesHtml}
+    `;
+  }
+
+  function fecharPreviewModal() {
+    document.getElementById('previewModal').classList.remove('active');
+  }
+
+  function confirmarEnvioFormulario() {
+    document.getElementById('siteBuilderForm').submit();
+  }
+</script>
+{% endblock %}

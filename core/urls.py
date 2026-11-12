@@ -21,4 +21,5 @@ urlpatterns = [
     path('stroop/', views.stroop_test_view, name='stroop_test'),
     path('stroop/submit/', views.stroop_submit_trial, name='stroop_submit'),
     path('stroop/analytics/', views.stroop_analytics_view, name='stroop_analytics'),
+    path('solicitar-projeto/', views.solicitar_projeto, name='solicitar_projeto'),
 ]

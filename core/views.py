@@ -466,3 +466,82 @@ def stroop_analytics_view(request):
         'overlaid_cumulative': json.dumps(overlaid_cumulative),
     }
     return render(request, 'core/stroop_analytics.html', context)
+
+
+
+
+import json
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from .models import SolicitacaoProjeto
+
+def solicitar_projeto(request):
+    if request.method == 'POST':
+        nome = request.POST.get('cliente_nome')
+        email = request.POST.get('cliente_email')
+        estrutura_raw = request.POST.get('estrutura_json', '[]')
+
+        try:
+            estrutura_dados = json.loads(estrutura_raw)
+        except json.JSONDecodeError:
+            estrutura_dados = []
+
+        SolicitacaoProjeto.objects.create(
+            cliente_nome=nome,
+            cliente_email=email,
+            estrutura_json=estrutura_dados
+        )
+
+        messages.success(request, "Arquitetura enviada com sucesso! Analisarei os blocos do seu projeto e entrarei em contato em breve.")
+        return redirect('solicitar_projeto')
+
+    return render(request, 'core/solicitar_projeto.html')
+
+
+import json
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.core.mail import send_mail
+from django.conf import settings
+from .models import SolicitacaoProjeto
+
+def solicitar_projeto(request):
+    if request.method == 'POST':
+        nome = request.POST.get('cliente_nome')
+        email = request.POST.get('cliente_email')
+        estrutura_raw = request.POST.get('estrutura_json', '[]')
+
+        try:
+            estrutura_dados = json.loads(estrutura_raw)
+        except json.JSONDecodeError:
+            estrutura_dados = []
+
+        # 1. Salva no banco de dados (visível em /admin)
+        SolicitacaoProjeto.objects.create(
+            cliente_nome=nome,
+            cliente_email=email,
+            estrutura_json=estrutura_dados
+        )
+
+        # 2. Formata um resumo legível e envia para o seu e-mail
+        resumo_texto = f"Nova solicitação de site recebida!\n\nCliente: {nome}\nE-mail: {email}\n\nArquitetura:\n"
+        for pag in estrutura_dados:
+            resumo_texto += f"\n--- {pag.get('pagina')} ---\n"
+            resumo_texto += "Conteúdos: " + ", ".join(pag.get('conteudos', [])) + "\n"
+            resumo_texto += "Funcionalidades: " + ", ".join(pag.get('funcionalidades', [])) + "\n"
+
+        try:
+            send_mail(
+                subject=f"[Portfólio] Nova Arquitetura de Site - {nome}",
+                message=resumo_texto,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=['seu_email@gmail.com'], # Substitua pelo seu e-mail
+                fail_silently=True,
+            )
+        except Exception:
+            pass
+
+        messages.success(request, "Arquitetura enviada com sucesso! Analisarei os blocos do seu projeto e entrarei em contato em breve.")
+        return redirect('solicitar_projeto')
+
+    return render(request, 'core/solicitar_projeto.html')
